@@ -1,0 +1,128 @@
+import SwiftUI
+
+struct PlaceManagementView: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel: PlaceManagementViewModel
+    @State private var showDeleteAlert: PlaceManagementViewModel.Row?
+    @State private var showCreation = false
+    private let environment: AppEnvironment
+
+    init(environment: AppEnvironment) {
+        self.environment = environment
+        _viewModel = StateObject(wrappedValue: PlaceManagementViewModel(environment: environment))
+    }
+
+    var body: some View {
+        NavigationView {
+            List {
+                ForEach(viewModel.places) { place in
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(place.name)
+                                .font(.headline)
+                            if place.isActive {
+                                Text("アクティブ")
+                                    .font(.caption)
+                                    .foregroundStyle(.green)
+                                    .padding(4)
+                                    .background(Color.green.opacity(0.1))
+                                    .cornerRadius(6)
+                            }
+                        }
+                        if let lastUsedAt = place.lastUsedAt {
+                            Text("最終利用: \(formatted(date: lastUsedAt))")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        HStack {
+                            Button("名称変更") {
+                                viewModel.beginRenaming(place: place)
+                            }
+                            Spacer()
+                            Button("削除", role: .destructive) {
+                                showDeleteAlert = place
+                            }
+                        }
+                        .font(.caption)
+                    }
+                    .padding(.vertical, 4)
+                }
+                if viewModel.places.isEmpty && viewModel.isLoading == false {
+                    Text("登録されている地点がありません").foregroundStyle(.secondary)
+                }
+            }
+            .overlay { ProgressView().opacity(viewModel.isLoading ? 1 : 0) }
+            .navigationTitle("地点管理")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("閉じる") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button { showCreation = true } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .task { await viewModel.load() }
+            .alert("削除確認", isPresented: Binding<Bool>(
+                get: { showDeleteAlert != nil },
+                set: { if !$0 { showDeleteAlert = nil } }
+            )) {
+                Button("削除", role: .destructive) {
+                    if let place = showDeleteAlert {
+                        Task { await viewModel.delete(place: place) }
+                    }
+                    showDeleteAlert = nil
+                }
+                Button("キャンセル", role: .cancel) { showDeleteAlert = nil }
+            } message: {
+                Text("選択した地点を削除します。よろしいですか？")
+            }
+            .sheet(item: $viewModel.renamingPlace) { place in
+                RenamePlaceSheet(place: place, newName: $viewModel.newName) {
+                    Task { await viewModel.commitRename() }
+                }
+            }
+            .sheet(isPresented: $showCreation, onDismiss: { Task { await viewModel.load() } }) {
+                PlaceCreationView(environment: environment)
+            }
+        }
+    }
+
+    private func formatted(date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+}
+
+private struct RenamePlaceSheet: View {
+    let place: PlaceManagementViewModel.Row
+    @Binding var newName: String
+    var onSave: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text(place.name)) {
+                    TextField("新しい名称", text: $newName)
+                }
+            }
+            .navigationTitle("名称変更")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("キャンセル") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("保存") {
+                        onSave()
+                        dismiss()
+                    }
+                    .disabled(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+}

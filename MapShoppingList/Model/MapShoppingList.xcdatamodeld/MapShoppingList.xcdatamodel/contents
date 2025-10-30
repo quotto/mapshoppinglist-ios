@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23333" systemVersion="24B5050b" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="AppSetting" representedClassName="AppSetting" syncable="YES">
+        <attribute name="key" optional="NO" attributeType="String"/>
+        <attribute name="value" optional="YES" attributeType="String"/>
+        <uniquenessConstraints>
+            <constraint>
+                <constraintEntry key="key"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="Item" representedClassName="Item" syncable="YES">
+        <attribute name="createdAt" optional="NO" attributeType="Date"/>
+        <attribute name="id" optional="NO" attributeType="UUID"/>
+        <attribute name="isPurchased" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
+        <attribute name="note" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="NO" attributeType="String"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date"/>
+        <relationship name="places" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Place" inverseName="items" inverseEntity="Place"/>
+        <fetchIndex name="item_purchase_updated">
+            <fetchIndexElement property="isPurchased" type="Binary"/>
+            <fetchIndexElement property="updatedAt" type="Binary"/>
+        </fetchIndex>
+        <uniquenessConstraints>
+            <constraint>
+                <constraintEntry key="id"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="NotifyState" representedClassName="NotifyState" syncable="YES">
+        <attribute name="lastNotifiedAt" optional="YES" attributeType="Date"/>
+        <attribute name="snoozeUntil" optional="YES" attributeType="Date"/>
+        <relationship name="place" optional="NO" minCount="1" maxCount="1" deletionRule="Cascade" destinationEntity="Place" inverseName="notifyState" inverseEntity="Place"/>
+        <uniquenessConstraints>
+            <constraint>
+                <constraintEntry key="place"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="Place" representedClassName="Place" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="UUID"/>
+        <attribute name="isActive" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
+        <attribute name="lastUsedAt" optional="YES" attributeType="Date"/>
+        <attribute name="latitudeE6" optional="NO" attributeType="Integer 32"/>
+        <attribute name="longitudeE6" optional="NO" attributeType="Integer 32"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="note" optional="YES" attributeType="String"/>
+        <relationship name="items" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Item" inverseName="places" inverseEntity="Item"/>
+        <relationship name="notifyState" optional="YES" minCount="0" maxCount="1" deletionRule="Nullify" destinationEntity="NotifyState" inverseName="place" inverseEntity="NotifyState"/>
+        <fetchIndex name="place_active_lastused">
+            <fetchIndexElement property="isActive" type="Binary"/>
+            <fetchIndexElement property="lastUsedAt" type="Binary"/>
+        </fetchIndex>
+        <uniquenessConstraints>
+            <constraint>
+                <constraintEntry key="id"/>
+            </constraint>
+            <constraint>
+                <constraintEntry key="latitudeE6"/>
+                <constraintEntry key="longitudeE6"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+</model>
