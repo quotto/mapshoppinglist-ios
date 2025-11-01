@@ -2,11 +2,11 @@ import SwiftUI
 import CoreLocation
 import GoogleMaps
 
-struct ManualPlacePickerMapView: UIViewRepresentable {
+struct PlaceSearchMapView: UIViewRepresentable {
     final class Coordinator: NSObject, GMSMapViewDelegate {
-        var parent: ManualPlacePickerMapView
+        var parent: PlaceSearchMapView
 
-        init(parent: ManualPlacePickerMapView) {
+        init(parent: PlaceSearchMapView) {
             self.parent = parent
         }
 
@@ -14,31 +14,39 @@ struct ManualPlacePickerMapView: UIViewRepresentable {
             parent.onCoordinateSelected(coordinate)
             parent.updateMarker(on: mapView, coordinate: coordinate)
         }
+
+        func mapView(_ mapView: GMSMapView, didTapPOIWithPlaceID placeID: String, name: String, location: CLLocationCoordinate2D) {
+            parent.onPOITapped(placeID, name, location)
+            parent.updateMarker(on: mapView, coordinate: location)
+        }
     }
 
-    let initialCoordinate: CLLocationCoordinate2D
-    let selectedCoordinate: CLLocationCoordinate2D?
+    let coordinate: CLLocationCoordinate2D?
     let onCoordinateSelected: (CLLocationCoordinate2D) -> Void
+    let onPOITapped: (String, String, CLLocationCoordinate2D) -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
     }
 
     func makeUIView(context: Context) -> GMSMapView {
-        let mapView = GMSMapView(frame: .zero, camera: GMSCameraPosition(latitude: initialCoordinate.latitude, longitude: initialCoordinate.longitude, zoom: 14))
+        let initial = coordinate ?? CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671)
+        let mapView = GMSMapView(frame: .zero, camera: GMSCameraPosition(latitude: initial.latitude, longitude: initial.longitude, zoom: 14))
         mapView.delegate = context.coordinator
-        mapView.settings.myLocationButton = true
+        mapView.settings.myLocationButton = false
         mapView.isMyLocationEnabled = false
-        if let selected = selectedCoordinate {
-            updateMarker(on: mapView, coordinate: selected)
+        if let coord = coordinate {
+            updateMarker(on: mapView, coordinate: coord)
         }
         return mapView
     }
 
     func updateUIView(_ mapView: GMSMapView, context: Context) {
-        if let selected = selectedCoordinate {
-            mapView.animate(toLocation: selected)
-            updateMarker(on: mapView, coordinate: selected)
+        if let coord = coordinate {
+            mapView.animate(toLocation: coord)
+            updateMarker(on: mapView, coordinate: coord)
+        } else {
+            mapView.clear()
         }
     }
 

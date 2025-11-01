@@ -1,35 +1,44 @@
 import Foundation
 import Combine
+import CoreLocation
+import GooglePlaces
 
 @MainActor
 final class PlaceSearchViewModel: ObservableObject {
     @Published var query: String = ""
     @Published var predictions: [PlaceAutocompletePrediction] = []
+    @Published var isPredictionListVisible = false
     @Published var isSearching = false
     @Published var isLoadingDetails = false
-    @Published var selectedPredictionId: String?
-    @Published var selectedDetails: PlaceDetails?
-    @Published var customName: String = ""
-    @Published var note: String = ""
+    @Published var isGeocoding = false
+    @Published var selectedCoordinate: CLLocationCoordinate2D?
+    @Published var displayText: String?
     @Published var isSaving = false
     @Published var errorMessage: String?
 
     private let placesSearchService: PlacesSearchService
     private let createPlaceUseCase: CreatePlaceUseCase
+    private let geocodingService: GeocodingService
     private var currentSession: PlacesAutocompleteSession?
+
+    private var selectedName: String?
+    private var selectedAddress: String?
 
     init(
         placesSearchService: PlacesSearchService,
-        createPlaceUseCase: CreatePlaceUseCase
+        createPlaceUseCase: CreatePlaceUseCase,
+        geocodingService: GeocodingService
     ) {
         self.placesSearchService = placesSearchService
         self.createPlaceUseCase = createPlaceUseCase
+        self.geocodingService = geocodingService
     }
 
     convenience init(environment: AppEnvironment) {
         self.init(
             placesSearchService: environment.placesSearchService,
-            createPlaceUseCase: environment.createPlaceUseCase
+            createPlaceUseCase: environment.createPlaceUseCase,
+            geocodingService: environment.geocodingService
         )
     }
 
@@ -37,20 +46,21 @@ final class PlaceSearchViewModel: ObservableObject {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.isEmpty == false else {
             predictions = []
-            selectedPredictionId = nil
-            selectedDetails = nil
-            errorMessage = nil
+            isPredictionListVisible = false
+            currentSession = nil
             return
         }
         isSearching = true
         errorMessage = nil
-        predictions = []
         do {
             let response = try await placesSearchService.autocomplete(query: trimmed)
             currentSession = response.session
             predictions = response.predictions
+            isPredictionListVisible = true
         } catch {
             errorMessage = error.localizedDescription
+            predictions = []
+            isPredictionListVisible = false
         }
         isSearching = false
     }
@@ -60,41 +70,60 @@ final class PlaceSearchViewModel: ObservableObject {
             errorMessage = "検索セッションが無効です。もう一度検索してください。"
             return
         }
-        selectedPredictionId = prediction.id
+        isPredictionListVisible = false
         isLoadingDetails = true
         errorMessage = nil
         do {
             let details = try await placesSearchService.fetchPlaceDetails(placeId: prediction.id, session: session)
-            selectedDetails = details
-            customName = details.name
-            note = details.formattedAddress ?? ""
+            apply(details: details)
         } catch {
             errorMessage = error.localizedDescription
-            selectedDetails = nil
         }
         isLoadingDetails = false
     }
 
+    func selectPlace(by placeID: String) async {
+        isPredictionListVisible = false
+        isLoadingDetails = true
+        errorMessage = nil
+        do {
+            let details = try await placesSearchService.fetchPlaceDetails(placeId: placeID)
+            apply(details: details)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isLoadingDetails = false
+    }
+
+    func updateCoordinateFromMap(_ coordinate: CLLocationCoordinate2D) {
+        selectedCoordinate = coordinate
+        selectedName = nil
+        selectedAddress = nil
+        displayText = nil
+        isPredictionListVisible = false
+        currentSession = nil
+        predictions = []
+        errorMessage = nil
+        Task { await reverseGeocodeIfNeeded(for: coordinate) }
+    }
+
     func saveSelectedPlace() async -> Place? {
-        guard let details = selectedDetails else {
+        guard let coordinate = selectedCoordinate else {
             errorMessage = "地点が選択されていません"
             return nil
         }
-        let trimmedName = customName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmedName.isEmpty == false else {
-            errorMessage = "名称を入力してください"
-            return nil
-        }
-
+        let rawName = (selectedName ?? selectedAddress)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = (rawName?.isEmpty == false ? rawName : nil) ?? "新しい地点"
+        let trimmedAddress = selectedAddress?.trimmingCharacters(in: .whitespacesAndNewlines)
         isSaving = true
         errorMessage = nil
 
         let place = Place(
             id: UUID(),
-            name: trimmedName,
-            latitudeE6: Self.toE6(details.latitude),
-            longitudeE6: Self.toE6(details.longitude),
-            note: note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : note,
+            name: name,
+            latitudeE6: Self.toE6(coordinate.latitude),
+            longitudeE6: Self.toE6(coordinate.longitude),
+            note: trimmedAddress?.isEmpty == false ? trimmedAddress : nil,
             lastUsedAt: Date(),
             isActive: false
         )
@@ -111,27 +140,38 @@ final class PlaceSearchViewModel: ObservableObject {
     }
 
     func resetSelection() {
-        selectedPredictionId = nil
-        selectedDetails = nil
-        customName = ""
-        note = ""
+        selectedCoordinate = nil
+        selectedName = nil
+        selectedAddress = nil
+        displayText = nil
+        predictions = []
+        isPredictionListVisible = false
+        currentSession = nil
     }
 
-    func handlePlaceCreated(_ place: Place) {
-        predictions = []
-        selectedPredictionId = place.id.uuidString
-        selectedDetails = PlaceDetails(
-            id: place.id.uuidString,
-            name: place.name,
-            latitude: Double(place.latitudeE6) / 1_000_000,
-            longitude: Double(place.longitudeE6) / 1_000_000,
-            formattedAddress: place.note
-        )
-        customName = place.name
-        note = place.note ?? ""
+    private func apply(details: PlaceDetails) {
+        selectedCoordinate = CLLocationCoordinate2D(latitude: details.latitude, longitude: details.longitude)
+        selectedName = details.name.isEmpty ? details.formattedAddress : details.name
+        selectedAddress = details.formattedAddress
+        displayText = selectedName ?? selectedAddress
+        errorMessage = nil
     }
 
     private static func toE6(_ value: Double) -> Int {
         Int((value * 1_000_000).rounded())
+    }
+
+    private func reverseGeocodeIfNeeded(for coordinate: CLLocationCoordinate2D) async {
+        isGeocoding = true
+        let result = await geocodingService.reverseGeocode(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        switch result {
+        case let .success(geocode):
+            selectedName = geocode.primaryText ?? geocode.secondaryText ?? "新しい地点"
+            selectedAddress = geocode.secondaryText
+            displayText = selectedAddress ?? selectedName
+        case let .failure(error):
+            errorMessage = error.localizedDescription
+        }
+        isGeocoding = false
     }
 }

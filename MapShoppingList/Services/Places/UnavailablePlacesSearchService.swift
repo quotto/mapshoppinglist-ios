@@ -15,5 +15,8 @@ struct UnavailablePlacesSearchService: PlacesSearchService {
     func fetchPlaceDetails(placeId: String, session: PlacesAutocompleteSession) async throws -> PlaceDetails {
         throw PlacesSearchError.serviceUnavailable(reason)
     }
-}
 
+    func fetchPlaceDetails(placeId: String) async throws -> PlaceDetails {
+        throw PlacesSearchError.serviceUnavailable(reason)
+    }
+}

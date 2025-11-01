@@ -7,6 +7,9 @@ protocol PlacesSearchService {
 
     /// 指定したプレイスIDの詳細を取得する。
     func fetchPlaceDetails(placeId: String, session: PlacesAutocompleteSession) async throws -> PlaceDetails
+
+    /// セッション不要のプレイス詳細取得。
+    func fetchPlaceDetails(placeId: String) async throws -> PlaceDetails
 }
 
 /// オートコンプリート検索の結果。

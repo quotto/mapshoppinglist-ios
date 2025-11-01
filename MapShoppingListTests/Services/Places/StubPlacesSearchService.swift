@@ -18,5 +18,11 @@ final class StubPlacesSearchService: PlacesSearchService {
         }
         return try result.get()
     }
-}
 
+    func fetchPlaceDetails(placeId: String) async throws -> PlaceDetails {
+        guard let result = detailsResult else {
+            fatalError("detailsResult が設定されていません")
+        }
+        return try result.get()
+    }
+}

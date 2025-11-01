@@ -67,4 +67,34 @@ final class GooglePlacesSearchService: PlacesSearchService {
             }
         }
     }
+
+    func fetchPlaceDetails(placeId: String) async throws -> PlaceDetails {
+        let properties = [
+            GMSPlaceProperty.name.rawValue,
+            GMSPlaceProperty.coordinate.rawValue,
+            GMSPlaceProperty.formattedAddress.rawValue,
+            GMSPlaceProperty.placeID.rawValue
+        ]
+        let request = GMSFetchPlaceRequest(placeID: placeId, placeProperties: properties, sessionToken: nil)
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<PlaceDetails, Error>) in
+            client.fetchPlace(with: request) { place, error in
+                if let error = error {
+                    continuation.resume(throwing: PlacesSearchError.underlying(error))
+                    return
+                }
+                guard let place = place else {
+                    continuation.resume(throwing: PlacesSearchError.serviceUnavailable("地点情報を取得できませんでした。"))
+                    return
+                }
+                let details = PlaceDetails(
+                    id: place.placeID ?? placeId,
+                    name: place.name ?? "",
+                    latitude: place.coordinate.latitude,
+                    longitude: place.coordinate.longitude,
+                    formattedAddress: place.formattedAddress
+                )
+                continuation.resume(returning: details)
+            }
+        }
+    }
 }
