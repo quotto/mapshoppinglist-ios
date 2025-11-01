@@ -29,6 +29,11 @@ struct PlaceManagementView: View {
                                     .cornerRadius(6)
                             }
                         }
+                        if let address = place.address, address.isEmpty == false {
+                            Text(address)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                         if let lastUsedAt = place.lastUsedAt {
                             Text("最終利用: \(formatted(date: lastUsedAt))")
                                 .font(.caption)

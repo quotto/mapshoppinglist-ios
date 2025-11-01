@@ -86,6 +86,18 @@ final class ItemEditorViewModel: ObservableObject {
         selectedPlaceIds.insert(place.id)
     }
 
+    func removePlace(_ place: Place) {
+        selectedPlaceIds.remove(place.id)
+    }
+
+    func selectedPlaces() -> [Place] {
+        availablePlaces.filter { selectedPlaceIds.contains($0.id) }
+    }
+
+    func place(for id: UUID) -> Place? {
+        availablePlaces.first { $0.id == id }
+    }
+
     func save() async -> Bool {
         guard title.isEmpty == false else {
             errorMessage = "タイトルを入力してください"

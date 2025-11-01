@@ -7,7 +7,7 @@ struct ItemEditorView: View {
     @StateObject private var viewModel: ItemEditorViewModel
     @State private var showDeleteConfirmation = false
     @State private var showPlaceSearch = false
-    @State private var showPlaceCreation = false
+    @State private var showRecentPlaces = false
 
     init(mode: ItemEditorMode, environment: AppEnvironment) {
         self.mode = mode
@@ -29,19 +29,21 @@ struct ItemEditorView: View {
                             Label("Googleで地点を検索", systemImage: "magnifyingglass")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        Button { showPlaceCreation = true } label: {
-                            Label("緯度・経度を手入力", systemImage: "plus")
+                        Button { showRecentPlaces = true } label: {
+                            Label("最近使った地点から選ぶ", systemImage: "clock")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .buttonStyle(.borderless)
                     }
-                    if viewModel.availablePlaces.isEmpty {
-                        Text("地点が登録されていません")
+
+                    let selectedPlaces = viewModel.selectedPlaces()
+                    if selectedPlaces.isEmpty {
+                        Text("地点が選択されていません")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(viewModel.availablePlaces, id: \.id) { place in
-                            PlaceSelectionRow(place: place, isSelected: viewModel.selectedPlaceIds.contains(place.id)) {
-                                viewModel.togglePlace(place)
+                        ForEach(selectedPlaces, id: \.id) { place in
+                            SelectedPlaceRow(place: place) {
+                                viewModel.removePlace(place)
                             }
                         }
                     }
@@ -91,38 +93,38 @@ struct ItemEditorView: View {
                 }
                 Button("キャンセル", role: .cancel) {}
             }
-            .sheet(isPresented: $showPlaceCreation, onDismiss: { Task { await viewModel.load() } }) {
-                PlaceCreationView(environment: environment)
-            }
             .sheet(isPresented: $showPlaceSearch) {
                 PlaceSearchView(environment: environment) { place in
                     viewModel.handlePlaceCreated(place)
+                }
+            }
+            .sheet(isPresented: $showRecentPlaces) {
+                RecentPlacesPickerView(environment: environment, initialSelection: viewModel.selectedPlaceIds) { selection in
+                    viewModel.selectedPlaceIds = selection
                 }
             }
         }
     }
 }
 
-private struct PlaceSelectionRow: View {
+private struct SelectedPlaceRow: View {
     let place: Place
-    let isSelected: Bool
-    let toggle: () -> Void
+    let remove: () -> Void
 
     var body: some View {
-        Button(action: toggle) {
-            HStack {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(.accentColor)
-                VStack(alignment: .leading) {
-                    Text(place.name)
-                    if let note = place.note, note.isEmpty == false {
-                        Text(note)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+        HStack {
+            VStack(alignment: .leading) {
+                Text(place.name)
+                if let note = place.note, note.isEmpty == false {
+                    Text(note)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
+            Spacer()
+            Button(role: .destructive, action: remove) {
+                Image(systemName: "minus.circle.fill")
+            }
         }
-        .buttonStyle(.plain)
     }
 }

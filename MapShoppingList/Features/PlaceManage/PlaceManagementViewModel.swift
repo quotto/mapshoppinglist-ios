@@ -8,6 +8,7 @@ final class PlaceManagementViewModel: ObservableObject {
         var name: String
         let isActive: Bool
         let lastUsedAt: Date?
+        let address: String?
     }
 
     @Published var places: [Row] = []
@@ -44,7 +45,13 @@ final class PlaceManagementViewModel: ObservableObject {
         do {
             let domainPlaces = try await loadPlacesUseCase.execute()
             places = domainPlaces.map { place in
-                Row(id: place.id, name: place.name, isActive: place.isActive, lastUsedAt: place.lastUsedAt)
+                Row(
+                    id: place.id,
+                    name: place.name,
+                    isActive: place.isActive,
+                    lastUsedAt: place.lastUsedAt,
+                    address: place.note
+                )
             }
         } catch {
             errorMessage = error.localizedDescription
