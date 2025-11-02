@@ -43,6 +43,18 @@ struct PlaceSearchView: View {
                 }
             )
             .cornerRadius(12)
+            .frame(minHeight: 320)
+
+            if viewModel.isOffline {
+                VStack(spacing: 8) {
+                    Text("オフラインのため地図上での検索が利用できません")
+                        .font(.footnote)
+                        .padding(12)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.red.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                }
+                .padding(12)
+            }
 
             VStack(alignment: .leading, spacing: 8) {
                 searchControls
@@ -53,7 +65,6 @@ struct PlaceSearchView: View {
             .padding(.horizontal, 12)
             .padding(.top, 12)
         }
-        .frame(maxHeight: .infinity)
         .overlay {
             if viewModel.isLoadingDetails || viewModel.isGeocoding {
                 ProgressView()
@@ -84,6 +95,22 @@ struct PlaceSearchView: View {
                     ProgressView()
                         .progressViewStyle(.circular)
                 }
+            }
+            if let message = viewModel.searchErrorMessage {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundColor(.orange)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(message)
+                            .font(.footnote)
+                        Button("再試行") {
+                            Task { await viewModel.performSearch() }
+                        }
+                        .font(.footnote)
+                    }
+                }
+                .padding(8)
+                .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
             }
         }
         .padding(12)
@@ -129,8 +156,14 @@ struct PlaceSearchView: View {
                     .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
             }
 
-            if let message = viewModel.errorMessage {
-                Text(message)
+            if let geocodeMessage = viewModel.geocodeErrorMessage {
+                Text(geocodeMessage)
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            if let formMessage = viewModel.formErrorMessage {
+                Text(formMessage)
                     .foregroundStyle(.red)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

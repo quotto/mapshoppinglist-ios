@@ -70,6 +70,7 @@ final class PlaceManagementViewModel: ObservableObject {
             try await updateNameUseCase.execute(placeId: target.id, newName: newName)
             renamingPlace = nil
             await load()
+            NotificationCenter.default.post(name: .geofenceNeedsSync, object: nil)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -79,6 +80,7 @@ final class PlaceManagementViewModel: ObservableObject {
         do {
             try await deletePlaceUseCase.execute(placeId: place.id)
             await load()
+            NotificationCenter.default.post(name: .geofenceNeedsSync, object: nil)
         } catch {
             errorMessage = error.localizedDescription
         }

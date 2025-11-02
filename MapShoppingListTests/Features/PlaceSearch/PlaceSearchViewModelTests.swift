@@ -1,5 +1,6 @@
 import XCTest
 import CoreLocation
+import Combine
 @testable import MapShoppingList
 
 @MainActor
@@ -28,7 +29,8 @@ final class PlaceSearchViewModelTests: XCTestCase {
         let repository = InMemoryPlacesRepository()
         let useCase = CreatePlaceUseCase(placesRepository: repository)
         let geocoder = StubGeocodingService()
-        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder)
+        let network = StubNetworkMonitor(isConnected: true)
+        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder, networkProvider: network)
 
         viewModel.query = "テスト"
         await viewModel.performSearch()
@@ -51,16 +53,17 @@ final class PlaceSearchViewModelTests: XCTestCase {
         let repository = InMemoryPlacesRepository()
         let useCase = CreatePlaceUseCase(placesRepository: repository)
         let geocoder = StubGeocodingService()
-        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder)
+        let network = StubNetworkMonitor(isConnected: true)
+        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder, networkProvider: network)
 
         viewModel.query = "テスト"
         await viewModel.performSearch()
         XCTAssertEqual(viewModel.predictions.count, 0)
-        XCTAssertEqual(viewModel.errorMessage, "キー未設定")
+        XCTAssertEqual(viewModel.searchErrorMessage, "キー未設定")
 
         let result = await viewModel.saveSelectedPlace()
         XCTAssertNil(result)
-        XCTAssertEqual(viewModel.errorMessage, "地点が選択されていません")
+        XCTAssertEqual(viewModel.formErrorMessage, "地点が選択されていません")
     }
 
     func testUpdateCoordinateFromMapUsesGeocode() async {
@@ -69,13 +72,32 @@ final class PlaceSearchViewModelTests: XCTestCase {
         let useCase = CreatePlaceUseCase(placesRepository: repository)
         let geocoder = StubGeocodingService()
         geocoder.result = .success(GeocodeResult(primaryText: "手動登録", secondaryText: "東京都千代田区"))
-        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder)
-
+        let network = StubNetworkMonitor(isConnected: true)
+        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder, networkProvider: network)
+    
         let coordinate = CLLocationCoordinate2D(latitude: 35.0, longitude: 139.0)
         viewModel.updateCoordinateFromMap(coordinate)
         try? await Task.sleep(nanoseconds: 5_000_000)
 
         XCTAssertEqual(viewModel.selectedCoordinate?.latitude, 35.0)
         XCTAssertEqual(viewModel.displayText, "東京都千代田区")
+    }
+}
+
+private final class StubNetworkMonitor: NetworkStatusProviding {
+    var isConnectedCurrent: Bool {
+        isConnected
+    }
+
+    var isConnectedPublisher: AnyPublisher<Bool, Never> {
+        subject.eraseToAnyPublisher()
+    }
+
+    private let subject: CurrentValueSubject<Bool, Never>
+    private var isConnected: Bool
+
+    init(isConnected: Bool) {
+        self.isConnected = isConnected
+        subject = CurrentValueSubject(isConnected)
     }
 }

@@ -5,4 +5,5 @@ public protocol GeofenceRegistryRepository {
     func fetchRegisteredGeofences() async throws -> [GeofenceSpec]
     func registerGeofences(_ geofences: [GeofenceSpec]) async throws
     func unregisterGeofences(_ geofences: [GeofenceSpec]) async throws
+    var onRegionEntered: ((UUID) -> Void)? { get set }
 }

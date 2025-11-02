@@ -3,6 +3,27 @@ import SwiftUI
 
 /// アプリ全体で利用する依存関係を束ねるコンテナ。
 final class AppEnvironment {
+    private static var sharedInstance: AppEnvironment = {
+        AppEnvironment(isSharedInstance: true)
+    }()
+
+    static var shared: AppEnvironment {
+        sharedInstance
+    }
+
+    static func configureShared(
+        stack: CoreDataStack = .shared,
+        placesSearchService: PlacesSearchService,
+        geocodingService: GeocodingService
+    ) {
+        sharedInstance = AppEnvironment(
+            stack: stack,
+            placesSearchService: placesSearchService,
+            geocodingService: geocodingService,
+            isSharedInstance: true
+        )
+    }
+
     // MARK: - Core Data / Repository
     let coreDataStack: CoreDataStack
     let shoppingListRepository: ShoppingListRepository
@@ -14,6 +35,10 @@ final class AppEnvironment {
     // MARK: - Services
     let placesSearchService: PlacesSearchService
     let geocodingService: GeocodingService
+    let locationPermissionManager: LocationPermissionManager
+    let notificationScheduler: NotificationScheduler
+    let geofenceCoordinator: GeofenceCoordinator
+    let networkMonitor: NetworkMonitor
 
     // MARK: - UseCases
     let addItemUseCase: AddShoppingItemUseCase
@@ -40,7 +65,8 @@ final class AppEnvironment {
         ),
         geocodingService: GeocodingService = UnavailableGeocodingService(
             reason: "Google Maps/Places APIキーが設定されていません。"
-        )
+        ),
+        isSharedInstance: Bool = false
     ) {
         coreDataStack = stack
 
@@ -48,8 +74,8 @@ final class AppEnvironment {
         let placeRepo = CoreDataPlacesRepository(stack: stack)
         let linkRepo = CoreDataItemPlaceLinkRepository(stack: stack)
         let notifyRepo = CoreDataNotificationStateRepository(stack: stack)
-        // ジオフェンスは後続で実装予定のため、暫定的にインメモリを利用。
-        let geofenceRepo = NoopGeofenceRegistryRepository()
+        // CoreLocation ベースのジオフェンス登録を利用。
+        let geofenceRepo = CoreLocationGeofenceRegistryRepository()
 
         shoppingListRepository = shoppingRepo
         placesRepository = placeRepo
@@ -76,11 +102,31 @@ final class AppEnvironment {
         getShoppingItemUseCase = GetShoppingItemUseCase(repository: shoppingRepo)
         buildGeofenceSyncPlanUseCase = BuildGeofenceSyncPlanUseCase(registryRepository: geofenceRepo)
         shouldSendNotificationUseCase = ShouldSendNotificationUseCase()
+
+        networkMonitor = NetworkMonitor()
+        networkMonitor.start()
+
+        locationPermissionManager = LocationPermissionManager()
+        notificationScheduler = NotificationScheduler()
+        geofenceCoordinator = GeofenceCoordinator(
+            placesRepository: placeRepo,
+            loadAllPlacesUseCase: loadAllPlacesUseCase,
+            loadShoppingItemsUseCase: loadShoppingItemsUseCase,
+            notificationStateRepository: notifyRepo,
+            shouldSendNotificationUseCase: shouldSendNotificationUseCase,
+            buildGeofenceSyncPlanUseCase: buildGeofenceSyncPlanUseCase,
+            geofenceRepository: geofenceRepo,
+            notificationScheduler: notificationScheduler
+        )
+        geofenceRepo.onRegionEntered = { [weak geofenceCoordinator] placeId in
+            guard let coordinator = geofenceCoordinator else { return }
+            Task { await coordinator.handleRegionEntry(placeId: placeId) }
+        }
     }
 }
 
 private struct AppEnvironmentKey: EnvironmentKey {
-    static let defaultValue = AppEnvironment()
+    static var defaultValue: AppEnvironment { AppEnvironment.shared }
 }
 
 extension EnvironmentValues {

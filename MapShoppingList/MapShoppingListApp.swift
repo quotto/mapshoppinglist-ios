@@ -9,12 +9,17 @@ import SwiftUI
 
 @main
 struct MapShoppingListApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var configurationWarning: String?
     private let environment: AppEnvironment
 
     init() {
         let result = MapServicesConfigurator.configure()
-        environment = AppEnvironment(placesSearchService: result.placesService, geocodingService: result.geocodingService)
+        AppEnvironment.configureShared(
+            placesSearchService: result.placesService,
+            geocodingService: result.geocodingService
+        )
+        environment = AppEnvironment.shared
         _configurationWarning = State(initialValue: result.warningMessage)
     }
 

@@ -119,6 +119,7 @@ final class ItemEditorViewModel: ObservableObject {
                     placeIds: selectedPlaceIds
                 )
                 try await addItemUseCase.execute(item: item, placeIds: selectedPlaceIds)
+                NotificationCenter.default.post(name: .geofenceNeedsSync, object: nil)
             case let .edit(id):
                 let existing = try await loadItemUseCase.execute(id: id)
                 var updated = existing
@@ -127,6 +128,7 @@ final class ItemEditorViewModel: ObservableObject {
                 updated.updatedAt = Date()
                 updated.placeIds = selectedPlaceIds
                 try await updateItemUseCase.execute(item: updated, updatedPlaceIds: selectedPlaceIds)
+                NotificationCenter.default.post(name: .geofenceNeedsSync, object: nil)
             }
             isSaving = false
             return true
@@ -141,6 +143,7 @@ final class ItemEditorViewModel: ObservableObject {
         guard case let .edit(id) = mode else { return false }
         do {
             try await deleteItemUseCase.execute(itemId: id)
+            NotificationCenter.default.post(name: .geofenceNeedsSync, object: nil)
             return true
         } catch {
             errorMessage = error.localizedDescription

@@ -54,6 +54,7 @@ final class ShoppingListViewModel: ObservableObject {
         do {
             try await updatePurchasedUseCase.execute(itemId: item.id, isPurchased: !item.isPurchased)
             await load()
+            NotificationCenter.default.post(name: .geofenceNeedsSync, object: nil)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -63,6 +64,7 @@ final class ShoppingListViewModel: ObservableObject {
         do {
             try await deleteItemUseCase.execute(itemId: item.id)
             await load()
+            NotificationCenter.default.post(name: .geofenceNeedsSync, object: nil)
         } catch {
             errorMessage = error.localizedDescription
         }

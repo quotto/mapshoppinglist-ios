@@ -14,11 +14,16 @@ final class PlaceSearchViewModel: ObservableObject {
     @Published var selectedCoordinate: CLLocationCoordinate2D?
     @Published var displayText: String?
     @Published var isSaving = false
-    @Published var errorMessage: String?
+    @Published var searchErrorMessage: String?
+    @Published var geocodeErrorMessage: String?
+    @Published var formErrorMessage: String?
+    @Published var isOffline: Bool = false
 
     private let placesSearchService: PlacesSearchService
     private let createPlaceUseCase: CreatePlaceUseCase
     private let geocodingService: GeocodingService
+    private let networkProvider: NetworkStatusProviding
+    private var cancellable: AnyCancellable?
     private var currentSession: PlacesAutocompleteSession?
 
     private var selectedName: String?
@@ -27,18 +32,27 @@ final class PlaceSearchViewModel: ObservableObject {
     init(
         placesSearchService: PlacesSearchService,
         createPlaceUseCase: CreatePlaceUseCase,
-        geocodingService: GeocodingService
+        geocodingService: GeocodingService,
+        networkProvider: NetworkStatusProviding
     ) {
         self.placesSearchService = placesSearchService
         self.createPlaceUseCase = createPlaceUseCase
         self.geocodingService = geocodingService
+        self.networkProvider = networkProvider
+        isOffline = networkProvider.isConnectedCurrent == false
+        cancellable = networkProvider.isConnectedPublisher
+            .receive(on: RunLoop.main)
+            .sink { [weak self] isConnected in
+                self?.isOffline = (isConnected == false)
+            }
     }
 
     convenience init(environment: AppEnvironment) {
         self.init(
             placesSearchService: environment.placesSearchService,
             createPlaceUseCase: environment.createPlaceUseCase,
-            geocodingService: environment.geocodingService
+            geocodingService: environment.geocodingService,
+            networkProvider: environment.networkMonitor
         )
     }
 
@@ -48,17 +62,23 @@ final class PlaceSearchViewModel: ObservableObject {
             predictions = []
             isPredictionListVisible = false
             currentSession = nil
+            searchErrorMessage = nil
+            return
+        }
+        guard isOffline == false else {
+            searchErrorMessage = "オフラインのため検索できません"
             return
         }
         isSearching = true
-        errorMessage = nil
+        searchErrorMessage = nil
         do {
+            currentSession = nil
             let response = try await placesSearchService.autocomplete(query: trimmed)
             currentSession = response.session
             predictions = response.predictions
             isPredictionListVisible = true
         } catch {
-            errorMessage = error.localizedDescription
+            searchErrorMessage = error.localizedDescription
             predictions = []
             isPredictionListVisible = false
         }
@@ -67,17 +87,24 @@ final class PlaceSearchViewModel: ObservableObject {
 
     func selectPrediction(_ prediction: PlaceAutocompletePrediction) async {
         guard let session = currentSession else {
-            errorMessage = "検索セッションが無効です。もう一度検索してください。"
+            searchErrorMessage = "検索セッションが無効です。もう一度検索してください。"
             return
         }
         isPredictionListVisible = false
         isLoadingDetails = true
-        errorMessage = nil
+        searchErrorMessage = nil
+        geocodeErrorMessage = nil
+        guard isOffline == false else {
+            searchErrorMessage = "オフラインのため詳細を取得できません"
+            isLoadingDetails = false
+            return
+        }
         do {
             let details = try await placesSearchService.fetchPlaceDetails(placeId: prediction.id, session: session)
             apply(details: details)
+            currentSession = nil
         } catch {
-            errorMessage = error.localizedDescription
+            searchErrorMessage = error.localizedDescription
         }
         isLoadingDetails = false
     }
@@ -85,12 +112,19 @@ final class PlaceSearchViewModel: ObservableObject {
     func selectPlace(by placeID: String) async {
         isPredictionListVisible = false
         isLoadingDetails = true
-        errorMessage = nil
+        searchErrorMessage = nil
+        geocodeErrorMessage = nil
+        guard isOffline == false else {
+            searchErrorMessage = "オフラインのため詳細を取得できません"
+            isLoadingDetails = false
+            return
+        }
         do {
             let details = try await placesSearchService.fetchPlaceDetails(placeId: placeID)
             apply(details: details)
+            currentSession = nil
         } catch {
-            errorMessage = error.localizedDescription
+            searchErrorMessage = error.localizedDescription
         }
         isLoadingDetails = false
     }
@@ -103,20 +137,22 @@ final class PlaceSearchViewModel: ObservableObject {
         isPredictionListVisible = false
         currentSession = nil
         predictions = []
-        errorMessage = nil
+        searchErrorMessage = nil
+        geocodeErrorMessage = nil
+        formErrorMessage = nil
         Task { await reverseGeocodeIfNeeded(for: coordinate) }
     }
 
     func saveSelectedPlace() async -> Place? {
         guard let coordinate = selectedCoordinate else {
-            errorMessage = "地点が選択されていません"
+            formErrorMessage = "地点が選択されていません"
             return nil
         }
         let rawName = (selectedName ?? selectedAddress)?.trimmingCharacters(in: .whitespacesAndNewlines)
         let name = (rawName?.isEmpty == false ? rawName : nil) ?? "新しい地点"
         let trimmedAddress = selectedAddress?.trimmingCharacters(in: .whitespacesAndNewlines)
         isSaving = true
-        errorMessage = nil
+        formErrorMessage = nil
 
         let place = Place(
             id: UUID(),
@@ -131,9 +167,10 @@ final class PlaceSearchViewModel: ObservableObject {
         do {
             try await createPlaceUseCase.execute(place: place)
             isSaving = false
+            NotificationCenter.default.post(name: .geofenceNeedsSync, object: nil)
             return place
         } catch {
-            errorMessage = error.localizedDescription
+            formErrorMessage = error.localizedDescription
             isSaving = false
             return nil
         }
@@ -147,6 +184,9 @@ final class PlaceSearchViewModel: ObservableObject {
         predictions = []
         isPredictionListVisible = false
         currentSession = nil
+        searchErrorMessage = nil
+        geocodeErrorMessage = nil
+        formErrorMessage = nil
     }
 
     private func apply(details: PlaceDetails) {
@@ -154,7 +194,8 @@ final class PlaceSearchViewModel: ObservableObject {
         selectedName = details.name.isEmpty ? details.formattedAddress : details.name
         selectedAddress = details.formattedAddress
         displayText = selectedName ?? selectedAddress
-        errorMessage = nil
+        geocodeErrorMessage = nil
+        formErrorMessage = nil
     }
 
     private static func toE6(_ value: Double) -> Int {
@@ -163,6 +204,7 @@ final class PlaceSearchViewModel: ObservableObject {
 
     private func reverseGeocodeIfNeeded(for coordinate: CLLocationCoordinate2D) async {
         isGeocoding = true
+        geocodeErrorMessage = nil
         let result = await geocodingService.reverseGeocode(latitude: coordinate.latitude, longitude: coordinate.longitude)
         switch result {
         case let .success(geocode):
@@ -170,7 +212,7 @@ final class PlaceSearchViewModel: ObservableObject {
             selectedAddress = geocode.secondaryText
             displayText = selectedAddress ?? selectedName
         case let .failure(error):
-            errorMessage = error.localizedDescription
+            geocodeErrorMessage = error.localizedDescription
         }
         isGeocoding = false
     }

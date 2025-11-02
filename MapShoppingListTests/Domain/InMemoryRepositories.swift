@@ -109,6 +109,7 @@ final class InMemoryPlacesRepository: PlacesRepository {
 
 final class InMemoryGeofenceRegistryRepository: GeofenceRegistryRepository {
     private var storage: [String: GeofenceSpec] = [:]
+    var onRegionEntered: ((UUID) -> Void)?
 
     func fetchRegisteredGeofences() async throws -> [GeofenceSpec] {
         Array(storage.values)

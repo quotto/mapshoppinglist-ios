@@ -40,6 +40,7 @@ final class PlaceCreationViewModel: ObservableObject {
         do {
             try await createPlaceUseCase.execute(place: place)
             isSaving = false
+            NotificationCenter.default.post(name: .geofenceNeedsSync, object: nil)
             return true
         } catch {
             errorMessage = error.localizedDescription
