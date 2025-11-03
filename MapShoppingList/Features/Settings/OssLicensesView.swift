@@ -1,34 +1,63 @@
 import SwiftUI
 
 struct OssLicensesView: View {
-    private let licenses: [OSSItem] = [
-        .init(name: "Google Maps SDK for iOS", repository: "https://developers.google.com/maps/documentation/ios-sdk", license: "Apache License 2.0"),
-        .init(name: "Google Places SDK for iOS", repository: "https://developers.google.com/places/ios-sdk", license: "Apache License 2.0"),
-        .init(name: "Swift Collections", repository: "https://github.com/apple/swift-collections", license: "Apache License 2.0")
-    ]
+    private let acknowledgements = AcknowledgementsLoader.load()
 
     var body: some View {
         NavigationView {
-            List(licenses) { item in
+            List(acknowledgements) { ack in
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(item.name)
+                    Text(ack.title)
                         .font(.headline)
-                    Text(item.repository)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                    Text(item.license)
-                        .font(.footnote)
+                    if let source = ack.source {
+                        Text(source)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    if let license = ack.licenseText {
+                        Text(license)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 .padding(.vertical, 4)
             }
             .navigationTitle("OSSライセンス")
+            .overlay {
+                if acknowledgements.isEmpty {
+                    Text("OSSライセンス情報がありません")
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
     }
+}
 
-    private struct OSSItem: Identifiable {
-        let id = UUID()
-        let name: String
-        let repository: String
-        let license: String
+private enum AcknowledgementsLoader {
+    private static let fileName = "S8Acknowledgements"
+
+    static func load() -> [Acknowledgement] {
+        guard
+            let url = Bundle.main.url(forResource: fileName, withExtension: "plist"),
+            let data = try? Data(contentsOf: url),
+            let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil),
+            let array = plist as? [[String: Any]]
+        else {
+            return []
+        }
+
+        return array.compactMap { dict in
+            guard let title = dict["identity"] as? String else { return nil }
+            let source = dict["source"] as? String
+            let license = dict["license"] as? String
+            return Acknowledgement(title: title, source: source, licenseText: license)
+        }
     }
+}
+
+private struct Acknowledgement: Identifiable {
+    let id = UUID()
+    let title: String
+    let source: String?
+    let licenseText: String?
 }

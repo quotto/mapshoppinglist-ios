@@ -200,9 +200,9 @@ flowchart LR
 
 ### 4.7 オープンソースライセンス（S8）
 
-- **ライブラリ**: AboutLibraries（`com.mikepenz:aboutlibraries-*`）を利用し、依存関係から自動生成されたライセンス一覧を表示する。
-- **UI**: Compose Material3 の `LibrariesContainer` を用いた一覧画面。トップバーのみアプリ側で提供し、一覧は AboutLibraries が生成したデータをそのまま表示する。
-- **遷移**: S1 のメニューから遷移し、トップバーの戻る操作で復帰する。
+- **ライブラリ表示**: `swift-package-list` をビルド時に実行して生成した `S8Acknowledgements.plist` を読み込み、アプリが利用している SwiftPM 依存ライブラリの名称・URL・ライセンス種別を表示する。
+- **UI**: SwiftUI `List` にタイトル・URL・ライセンス文を表示し、リストが空の場合は空ビューメッセージを表示する。
+- **遷移**: S1 のメニューから遷移し、ナビゲーションバーの戻るボタンで復帰する。
 
 ---
 
