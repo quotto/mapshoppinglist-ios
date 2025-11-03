@@ -8,7 +8,7 @@ struct UnavailablePlacesSearchService: PlacesSearchService {
         self.reason = reason
     }
 
-    func autocomplete(query: String) async throws -> PlacesAutocompleteResponse {
+    func autocomplete(query: String, session: PlacesAutocompleteSession?) async throws -> PlacesAutocompleteResponse {
         throw PlacesSearchError.serviceUnavailable(reason)
     }
 

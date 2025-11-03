@@ -103,10 +103,12 @@ struct PlaceSearchView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(message)
                             .font(.footnote)
-                        Button("再試行") {
-                            Task { await viewModel.performSearch() }
+                        if viewModel.isSearchRetryable {
+                            Button("再試行") {
+                                Task { await viewModel.performSearch() }
+                            }
+                            .font(.footnote)
                         }
-                        .font(.footnote)
                     }
                 }
                 .padding(8)

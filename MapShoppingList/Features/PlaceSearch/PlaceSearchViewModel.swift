@@ -15,6 +15,7 @@ final class PlaceSearchViewModel: ObservableObject {
     @Published var displayText: String?
     @Published var isSaving = false
     @Published var searchErrorMessage: String?
+    @Published var isSearchRetryable: Bool = false
     @Published var geocodeErrorMessage: String?
     @Published var formErrorMessage: String?
     @Published var isOffline: Bool = false
@@ -25,6 +26,7 @@ final class PlaceSearchViewModel: ObservableObject {
     private let networkProvider: NetworkStatusProviding
     private var cancellable: AnyCancellable?
     private var currentSession: PlacesAutocompleteSession?
+    private var lastQuery: String?
 
     private var selectedName: String?
     private var selectedAddress: String?
@@ -63,24 +65,40 @@ final class PlaceSearchViewModel: ObservableObject {
             isPredictionListVisible = false
             currentSession = nil
             searchErrorMessage = nil
+            isSearchRetryable = false
+            lastQuery = nil
             return
         }
         guard isOffline == false else {
             searchErrorMessage = "オフラインのため検索できません"
+            isSearchRetryable = false
             return
         }
         isSearching = true
         searchErrorMessage = nil
+        isSearchRetryable = false
         do {
-            currentSession = nil
-            let response = try await placesSearchService.autocomplete(query: trimmed)
+            let reuseSession = (
+                currentSession != nil &&
+                (lastQuery.map { trimmed.hasPrefix($0) } ?? false)
+            )
+            let response = try await placesSearchService.autocomplete(
+                query: trimmed,
+                session: reuseSession ? currentSession : nil
+            )
             currentSession = response.session
             predictions = response.predictions
-            isPredictionListVisible = true
+            isPredictionListVisible = response.predictions.isEmpty == false
+            if response.predictions.isEmpty {
+                searchErrorMessage = "候補が見つかりませんでした。条件を変えて検索してください。"
+                isSearchRetryable = false
+            }
+            lastQuery = trimmed
+        } catch let error as PlacesSearchError {
+            handleSearchError(error)
         } catch {
-            searchErrorMessage = error.localizedDescription
-            predictions = []
-            isPredictionListVisible = false
+            let wrapped = PlacesSearchError.underlying(error)
+            handleSearchError(wrapped)
         }
         isSearching = false
     }
@@ -93,9 +111,11 @@ final class PlaceSearchViewModel: ObservableObject {
         isPredictionListVisible = false
         isLoadingDetails = true
         searchErrorMessage = nil
+        isSearchRetryable = false
         geocodeErrorMessage = nil
         guard isOffline == false else {
             searchErrorMessage = "オフラインのため詳細を取得できません"
+            isSearchRetryable = false
             isLoadingDetails = false
             return
         }
@@ -103,8 +123,14 @@ final class PlaceSearchViewModel: ObservableObject {
             let details = try await placesSearchService.fetchPlaceDetails(placeId: prediction.id, session: session)
             apply(details: details)
             currentSession = nil
+            lastQuery = nil
+        } catch let error as PlacesSearchError {
+            searchErrorMessage = error.errorDescription
+            isSearchRetryable = error.isRetryable
         } catch {
-            searchErrorMessage = error.localizedDescription
+            let wrapped = PlacesSearchError.underlying(error)
+            searchErrorMessage = wrapped.errorDescription
+            isSearchRetryable = wrapped.isRetryable
         }
         isLoadingDetails = false
     }
@@ -113,9 +139,11 @@ final class PlaceSearchViewModel: ObservableObject {
         isPredictionListVisible = false
         isLoadingDetails = true
         searchErrorMessage = nil
+        isSearchRetryable = false
         geocodeErrorMessage = nil
         guard isOffline == false else {
             searchErrorMessage = "オフラインのため詳細を取得できません"
+            isSearchRetryable = false
             isLoadingDetails = false
             return
         }
@@ -123,8 +151,14 @@ final class PlaceSearchViewModel: ObservableObject {
             let details = try await placesSearchService.fetchPlaceDetails(placeId: placeID)
             apply(details: details)
             currentSession = nil
+            lastQuery = nil
+        } catch let error as PlacesSearchError {
+            searchErrorMessage = error.errorDescription
+            isSearchRetryable = error.isRetryable
         } catch {
-            searchErrorMessage = error.localizedDescription
+            let wrapped = PlacesSearchError.underlying(error)
+            searchErrorMessage = wrapped.errorDescription
+            isSearchRetryable = wrapped.isRetryable
         }
         isLoadingDetails = false
     }
@@ -138,6 +172,7 @@ final class PlaceSearchViewModel: ObservableObject {
         currentSession = nil
         predictions = []
         searchErrorMessage = nil
+        isSearchRetryable = false
         geocodeErrorMessage = nil
         formErrorMessage = nil
         Task { await reverseGeocodeIfNeeded(for: coordinate) }
@@ -185,6 +220,7 @@ final class PlaceSearchViewModel: ObservableObject {
         isPredictionListVisible = false
         currentSession = nil
         searchErrorMessage = nil
+        isSearchRetryable = false
         geocodeErrorMessage = nil
         formErrorMessage = nil
     }
@@ -196,6 +232,17 @@ final class PlaceSearchViewModel: ObservableObject {
         displayText = selectedName ?? selectedAddress
         geocodeErrorMessage = nil
         formErrorMessage = nil
+    }
+
+    private func handleSearchError(_ error: PlacesSearchError) {
+        searchErrorMessage = error.errorDescription ?? "地点検索に失敗しました。"
+        isSearchRetryable = error.isRetryable
+        predictions = []
+        isPredictionListVisible = false
+        if error.isRetryable == false {
+            currentSession = nil
+        }
+        lastQuery = nil
     }
 
     private static func toE6(_ value: Double) -> Int {
