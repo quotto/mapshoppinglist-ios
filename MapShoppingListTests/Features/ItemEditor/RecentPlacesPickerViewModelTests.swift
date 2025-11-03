@@ -14,13 +14,28 @@ final class RecentPlacesPickerViewModelTests: XCTestCase {
         let viewModel = RecentPlacesPickerViewModel(getRecentPlacesUseCase: GetRecentPlacesUseCase(placesRepository: repository), initialSelection: [placeB.id])
 
         await viewModel.load()
-        XCTAssertEqual(viewModel.places.count, 2)
+        XCTAssertEqual(viewModel.placeRows.count, 2)
+        XCTAssertEqual(viewModel.placeRows.first?.title, "スーパーA")
+        XCTAssertEqual(viewModel.placeRows.first?.detail, "東京都")
+        XCTAssertEqual(viewModel.placeRows.last?.detail, nil)
         XCTAssertTrue(viewModel.selectedIds.contains(placeB.id))
 
-        viewModel.toggle(place: placeA)
+        viewModel.toggle(placeId: placeA.id)
         XCTAssertTrue(viewModel.selectedIds.contains(placeA.id))
 
-        viewModel.toggle(place: placeB)
+        viewModel.toggle(placeId: placeB.id)
         XCTAssertFalse(viewModel.selectedIds.contains(placeB.id))
+    }
+
+    func testPlaceRowTitleFallbackWhenNameMissing() {
+        let place = Place(id: UUID(), name: "  ", latitudeE6: 0, longitudeE6: 0, note: "東京都千代田区", lastUsedAt: nil, isActive: true)
+        let row = RecentPlacesPickerViewModel.PlaceRow(place: place)
+        XCTAssertEqual(row.title, "東京都千代田区")
+        XCTAssertNil(row.detail)
+
+        let placeNoInfo = Place(id: UUID(), name: "", latitudeE6: 0, longitudeE6: 0, note: nil, lastUsedAt: nil, isActive: true)
+        let rowNoInfo = RecentPlacesPickerViewModel.PlaceRow(place: placeNoInfo)
+        XCTAssertEqual(rowNoInfo.title, "名称未設定")
+        XCTAssertNil(rowNoInfo.detail)
     }
 }

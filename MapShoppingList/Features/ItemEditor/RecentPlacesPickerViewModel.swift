@@ -3,7 +3,7 @@ import Combine
 
 @MainActor
 final class RecentPlacesPickerViewModel: ObservableObject {
-    @Published var places: [Place] = []
+    @Published var placeRows: [PlaceRow] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var selectedIds: Set<UUID>
@@ -29,18 +29,48 @@ final class RecentPlacesPickerViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         do {
-            places = try await getRecentPlacesUseCase.execute(limit: loadLimit)
+            let places = try await getRecentPlacesUseCase.execute(limit: loadLimit)
+            placeRows = places.map { PlaceRow(place: $0) }
         } catch {
             errorMessage = error.localizedDescription
         }
         isLoading = false
     }
 
-    func toggle(place: Place) {
-        if selectedIds.contains(place.id) {
-            selectedIds.remove(place.id)
+    func toggle(placeId: UUID) {
+        if selectedIds.contains(placeId) {
+            selectedIds.remove(placeId)
         } else {
-            selectedIds.insert(place.id)
+            selectedIds.insert(placeId)
+        }
+    }
+
+    struct PlaceRow: Identifiable {
+        let id: UUID
+        let title: String
+        let detail: String?
+
+        init(place: Place) {
+            id = place.id
+            let trimmedName = place.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmedNote = place.note?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            if trimmedName.isEmpty {
+                if let note = trimmedNote, note.isEmpty == false {
+                    title = note
+                    detail = nil
+                } else {
+                    title = "名称未設定"
+                    detail = nil
+                }
+            } else {
+                title = trimmedName
+                if let note = trimmedNote, note.isEmpty == false, note != trimmedName {
+                    detail = note
+                } else {
+                    detail = nil
+                }
+            }
         }
     }
 }

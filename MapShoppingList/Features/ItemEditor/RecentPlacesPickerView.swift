@@ -25,22 +25,22 @@ struct RecentPlacesPickerView: View {
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if viewModel.places.isEmpty {
+                } else if viewModel.placeRows.isEmpty {
                     Text("最近の地点がありません")
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    List(viewModel.places, id: \.id) { place in
+                    List(viewModel.placeRows) { row in
                         Button {
-                            viewModel.toggle(place: place)
+                            viewModel.toggle(placeId: row.id)
                         } label: {
                             HStack {
-                                Image(systemName: viewModel.selectedIds.contains(place.id) ? "checkmark.circle.fill" : "circle")
+                                Image(systemName: viewModel.selectedIds.contains(row.id) ? "checkmark.circle.fill" : "circle")
                                     .foregroundColor(.accentColor)
                                 VStack(alignment: .leading) {
-                                    Text(place.name)
-                                    if let note = place.note, note.isEmpty == false {
-                                        Text(note)
+                                    Text(row.title)
+                                    if let detail = row.detail {
+                                        Text(detail)
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }

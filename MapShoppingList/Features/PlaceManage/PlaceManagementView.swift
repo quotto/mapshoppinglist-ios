@@ -16,19 +16,29 @@ struct PlaceManagementView: View {
         NavigationView {
             List {
                 ForEach(viewModel.places) { place in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text(place.name)
                                 .font(.headline)
                             if place.isActive {
                                 Text("アクティブ")
                                     .font(.caption)
                                     .foregroundStyle(.green)
-                                    .padding(4)
-                                    .background(Color.green.opacity(0.1))
-                                    .cornerRadius(6)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.green.opacity(0.12), in: Capsule())
                             }
+                            Spacer()
+                            Button {
+                                showDeleteAlert = place
+                            } label: {
+                                Image(systemName: "trash")
+                                    .foregroundStyle(.red)
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("\(place.name)を削除")
                         }
+
                         if let address = place.address, address.isEmpty == false {
                             Text(address)
                                 .font(.caption)
@@ -39,18 +49,12 @@ struct PlaceManagementView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                        HStack {
-                            Button("名称変更") {
-                                viewModel.beginRenaming(place: place)
-                            }
-                            Spacer()
-                            Button("削除", role: .destructive) {
-                                showDeleteAlert = place
-                            }
-                        }
-                        .font(.caption)
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        viewModel.beginRenaming(place: place)
+                    }
                 }
                 if viewModel.places.isEmpty && viewModel.isLoading == false {
                     Text("登録されている地点がありません").foregroundStyle(.secondary)
