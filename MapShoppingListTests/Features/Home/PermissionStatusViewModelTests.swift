@@ -21,25 +21,6 @@ final class PermissionStatusViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.notificationStatus, .denied)
     }
 
-    func testRequestInitialPermissionsRequestsWhenNeeded() async {
-        let location = StubLocationPermissionManager(status: .notDetermined, requested: .authorizedAlways)
-        let notification = StubNotificationScheduler(status: .notDetermined, requested: .authorized)
-        let settings = StubSettingsOpener()
-        let viewModel = PermissionStatusViewModel(
-            locationManager: location,
-            notificationScheduler: notification,
-            settingsOpener: settings
-        )
-
-        await viewModel.refreshStatuses()
-        await viewModel.requestInitialPermissionsIfNeeded()
-
-        XCTAssertEqual(location.requestCallCount, 1)
-        XCTAssertEqual(notification.requestCallCount, 1)
-        XCTAssertEqual(viewModel.locationStatus, .authorizedAlways)
-        XCTAssertEqual(viewModel.notificationStatus, .authorized)
-    }
-
     func testNeedsLocationPromptIsFalseWhenAuthorizedAlways() async {
         let location = StubLocationPermissionManager(status: .authorizedAlways, requested: .authorizedAlways)
         let notification = StubNotificationScheduler(status: .authorized, requested: .authorized)
@@ -75,7 +56,7 @@ final class PermissionStatusViewModelTests: XCTestCase {
 // MARK: - Stubs
 
 @MainActor
-private final class StubLocationPermissionManager: LocationPermissionManaging {
+private final class StubLocationPermissionManager: LocationPermissionManager {
     var status: CLAuthorizationStatus
     private let requestedStatus: CLAuthorizationStatus
     private(set) var requestCallCount = 0
@@ -89,7 +70,7 @@ private final class StubLocationPermissionManager: LocationPermissionManaging {
         status
     }
 
-    func requestAlwaysAuthorizationIfNeeded() async -> CLAuthorizationStatus {
+    func requestAuthorization() async -> CLAuthorizationStatus {
         requestCallCount += 1
         status = requestedStatus
         return requestedStatus

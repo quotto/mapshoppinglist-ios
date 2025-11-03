@@ -10,12 +10,12 @@ final class PermissionStatusViewModel: ObservableObject {
     @Published var isRequestingLocation: Bool = false
     @Published var isRequestingNotification: Bool = false
 
-    private let locationManager: LocationPermissionManaging
+    private let locationManager: LocationPermissionManager
     private let notificationScheduler: NotificationScheduling
     private let settingsOpener: SettingsOpening
 
     init(
-        locationManager: LocationPermissionManaging,
+        locationManager: LocationPermissionManager,
         notificationScheduler: NotificationScheduling,
         settingsOpener: SettingsOpening
     ) {
@@ -39,22 +39,9 @@ final class PermissionStatusViewModel: ObservableObject {
         notificationStatus = await notificationScheduler.authorizationStatus()
     }
 
-    func requestInitialPermissionsIfNeeded() async {
-        if needsLocationPrompt {
-            isRequestingLocation = true
-            locationStatus = await locationManager.requestAlwaysAuthorizationIfNeeded()
-            isRequestingLocation = false
-        }
-        if needsNotificationPrompt {
-            isRequestingNotification = true
-            notificationStatus = await notificationScheduler.requestAuthorization()
-            isRequestingNotification = false
-        }
-    }
-
     func requestLocationAuthorization() async {
         isRequestingLocation = true
-        locationStatus = await locationManager.requestAlwaysAuthorizationIfNeeded()
+        locationStatus = await locationManager.requestAuthorization()
         isRequestingLocation = false
     }
 
@@ -72,8 +59,6 @@ final class PermissionStatusViewModel: ObservableObject {
         switch locationStatus {
         case .authorizedAlways:
             return false
-        case .authorized:
-            return false
         default:
             return true
         }
@@ -90,18 +75,10 @@ final class PermissionStatusViewModel: ObservableObject {
 
     var locationMessage: String {
         switch locationStatus {
-        case .notDetermined:
-            return "ジオフェンス通知を利用するため、位置情報の常に許可が必要です。"
-        case .authorizedWhenInUse:
-            return "現在は「使用中のみ許可」です。常に許可へ切り替えると地点付近で通知できます。"
-        case .denied, .restricted:
-            return "設定アプリで位置情報の常に許可を有効にしてください。"
-        case .authorized:
-            return "位置情報の許可状態を確認してください。"
         case .authorizedAlways:
             return ""
-        @unknown default:
-            return "位置情報の権限状態を確認できません。"
+        default:
+            return "登録したお店の付近で通知を受け取るためには位置情報の利用を「常に許可」に変更してください。"
         }
     }
 
@@ -117,15 +94,6 @@ final class PermissionStatusViewModel: ObservableObject {
             return ""
         @unknown default:
             return "設定を開く"
-        }
-    }
-
-    var locationSecondaryButtonTitle: String? {
-        switch locationStatus {
-        case .authorizedWhenInUse:
-            return "設定を開く"
-        default:
-            return nil
         }
     }
 

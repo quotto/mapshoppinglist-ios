@@ -41,5 +41,5 @@ fastlane/screenshots/**/*.png
 fastlane/test_output
 
 iOSInjectionProject/
-requirements/report
+requirements/reports/
 requirements/tasks.md

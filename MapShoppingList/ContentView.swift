@@ -69,16 +69,18 @@ struct ContentView: View {
                     }
                 }
                 if viewModel.pendingItems.isEmpty && viewModel.purchasedItems.isEmpty && viewModel.isLoading == false {
-                    VStack(alignment: .center) {
-                        Image(systemName: "cart")
-                            .font(.largeTitle)
-                            .foregroundStyle(.secondary)
-                        Text("アイテムがありません")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 4)
+                    Section {
+                        VStack(alignment: .center) {
+                            Image(systemName: "cart")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                            Text("アイテムがありません")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .padding(.top, 4)
+                        }
+                        .frame(maxWidth: .infinity)
                     }
-                    .frame(maxWidth: .infinity)
                 }
             }
             .overlay { ProgressView().opacity(viewModel.isLoading ? 1 : 0) }
@@ -111,7 +113,7 @@ struct ContentView: View {
             }
             .task {
                 await permissionViewModel.refreshStatuses()
-                await permissionViewModel.requestInitialPermissionsIfNeeded()
+                await permissionViewModel.requestLocationAuthorization()
                 await viewModel.load()
                 await environment.geofenceCoordinator.syncActiveGeofences()
             }

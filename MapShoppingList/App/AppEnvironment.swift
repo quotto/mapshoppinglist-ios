@@ -35,7 +35,7 @@ final class AppEnvironment {
     // MARK: - Services
     let placesSearchService: PlacesSearchService
     let geocodingService: GeocodingService
-    let locationPermissionManager: LocationPermissionManager
+    let locationPermissionManager: DefaultLocationPermissionManager
     let notificationScheduler: NotificationScheduler
     let geofenceCoordinator: GeofenceCoordinator
     let networkMonitor: NetworkMonitor
@@ -106,7 +106,7 @@ final class AppEnvironment {
         networkMonitor = NetworkMonitor()
         networkMonitor.start()
 
-        locationPermissionManager = LocationPermissionManager()
+        locationPermissionManager = DefaultLocationPermissionManager()
         notificationScheduler = NotificationScheduler()
         geofenceCoordinator = GeofenceCoordinator(
             placesRepository: placeRepo,

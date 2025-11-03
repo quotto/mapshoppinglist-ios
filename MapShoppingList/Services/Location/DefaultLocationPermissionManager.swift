@@ -1,13 +1,13 @@
 import CoreLocation
 
 @MainActor
-protocol LocationPermissionManaging: AnyObject {
+protocol LocationPermissionManager: AnyObject {
     func authorizationStatus() -> CLAuthorizationStatus
-    func requestAlwaysAuthorizationIfNeeded() async -> CLAuthorizationStatus
+    func requestAuthorization() async -> CLAuthorizationStatus
 }
 
 @MainActor
-final class LocationPermissionManager: NSObject, CLLocationManagerDelegate, LocationPermissionManaging {
+final class DefaultLocationPermissionManager: NSObject, CLLocationManagerDelegate, LocationPermissionManager {
     private let manager: CLLocationManager
     private var continuation: CheckedContinuation<CLAuthorizationStatus, Never>?
 
@@ -24,23 +24,23 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate, Loca
         manager.authorizationStatus
     }
 
-    func requestAlwaysAuthorizationIfNeeded() async -> CLAuthorizationStatus {
+    func requestAuthorization() async -> CLAuthorizationStatus {
         let status = manager.authorizationStatus
+        // 標準のリクエスト要求ダイアログはステータスが.notDeterminedの場合にのみ表示されるため、
+        // それ以外の場合は現在のステータスをそのまま返す
         switch status {
         case .notDetermined:
-            return await requestAlways()
-        case .authorizedWhenInUse:
-            return await requestAlways()
+            return await requestWhenInUse()
         default:
             return status
         }
     }
 
-    private func requestAlways() async -> CLAuthorizationStatus {
+    private func requestWhenInUse() async -> CLAuthorizationStatus {
         if continuation != nil { return manager.authorizationStatus }
         return await withCheckedContinuation { (continuation: CheckedContinuation<CLAuthorizationStatus, Never>) in
             self.continuation = continuation
-            self.manager.requestAlwaysAuthorization()
+            self.manager.requestWhenInUseAuthorization()
         }
     }
 
@@ -51,7 +51,7 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate, Loca
     }
 }
 
-private extension LocationPermissionManager {
+private extension DefaultLocationPermissionManager {
     static var supportsBackgroundLocation: Bool {
         guard let modes = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] else { return false }
         return modes.contains("location")

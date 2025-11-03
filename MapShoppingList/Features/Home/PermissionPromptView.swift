@@ -5,21 +5,19 @@ struct PermissionPromptSection: View {
     @ObservedObject var viewModel: PermissionStatusViewModel
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(alignment: .center, spacing: 12) {
             if viewModel.needsLocationPrompt {
                 PermissionPromptCard(
                     icon: "location.circle",
                     title: "位置情報の許可設定",
                     message: viewModel.locationMessage,
-                    primaryTitle: viewModel.locationPrimaryButtonTitle,
+                    primaryTitle: "設定を開く",
                     isPrimaryLoading: viewModel.isRequestingLocation,
                     primaryAction: {
                         handleLocationPrimaryAction()
                     },
-                    secondaryTitle: viewModel.locationSecondaryButtonTitle,
-                    secondaryAction: {
-                        viewModel.openSettings()
-                    }
+                    secondaryTitle: nil,
+                    secondaryAction: nil
                 )
             }
 
@@ -38,19 +36,17 @@ struct PermissionPromptSection: View {
                 )
             }
         }
+        .padding(.horizontal, 16)
+        .background(Color(uiColor: .systemGroupedBackground))
         .listRowInsets(EdgeInsets())
         .listRowSeparator(.hidden)
     }
 
     private func handleLocationPrimaryAction() {
         switch viewModel.locationStatus {
-        case .notDetermined, .authorizedWhenInUse:
-            Task { await viewModel.requestLocationAuthorization() }
-        case .denied, .restricted:
-            viewModel.openSettings()
-        case .authorized, .authorizedAlways:
+        case .authorizedAlways:
             break
-        @unknown default:
+        default:
             viewModel.openSettings()
         }
     }
