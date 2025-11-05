@@ -331,17 +331,19 @@ flowchart LR
 
 ## 11. CI/CD 運用方針
 
-- **CI/CD 基盤**: GitHub Actions。コンポジットアクション `./.github/actions/android-gradle` を介して JDK 21・Secrets 注入・Gradle 実行を統一化し、既定では GitHub ホストランナーにプリインストール済みの Android SDK を利用する。追加コンポーネントが必要なジョブのみ `ensure-android-components=true` として `sdkmanager` を実行する。
-- **ブランチ別ワークフロー**
-    - `push`（`main`/`release` 以外）: `android-ci.yml` でユニットテスト（`testDebugUnitTest`+`assembleDebug`）と `lintDebug` を並列実行し、ユニットテスト結果は GitHub Actions Test Report に連携、Lint レポートは Job Summary と 1 日保持の Artifact に出力する。
-    - `pull_request`（base=`release`）: `android-release.yml` でユニットテスト→API 29 & 35 の計装テスト→`bundleRelease`+`publishReleaseBundle` を実行し、内部テストトラックへ自動アップロードする。Firebase Test Lab 実行はサービスアカウント Secret 設定時のみ行う。
-    - `push`（`release`）: `android-promote.yml` が `promoteReleaseArtifact` を起動し、内部テストから製品版トラックへプロモートする（審査提出は手動）。
-- **キャッシュ方針**: すべてのワークフローで `actions/cache@v4` を活用し、`/usr/local/lib/android/sdk/{build-tools,platforms,platform-tools}` と `~/.android` をキー `android-sdk-${ runner.os }-${ hashFiles('gradle/libs.versions.toml') }` で再利用する。キャッシュミス時は `ensure-android-components` 有効化ジョブが不足分を取得する。
-- **バージョン採番**
-    - `gradle/version.properties` に格納したメジャー番号を手動更新。
-    - マイナー番号は Pull Request 番号を CI 環境変数で注入しストーリー単位で採番。
-    - パッチ番号は `github.run_number` を利用しビルド単位で採番。`versionCode = major*1_000_000 + minor*10_000 + patch`、`versionName = "major.minor.patch"`。
-- **Secrets 管理**
-    - GitHub Secrets を使用し、`MAPS_API_KEY`、`PLAY_SERVICE_ACCOUNT_JSON`、`ANDROID_KEYSTORE_*`、`FIREBASE_TEST_LAB_SA_JSON` を登録。
-    - ワークフロー内で一時ファイルとして `local.properties`、`gradle/keystore.jks`、`gradle/play-service-account.json` を生成し、ジョブ終了時に削除する。
-    - Keystore・Play 資格情報が存在しない場合でもビルドを継続し、必要時のみ署名・配信処理を有効にする。
+- **基盤**: GitHub Actions（iOS 版優先で構築。Android 版ワークフローは参考情報として別途管理）。
+
+### 11.1 iOS（本プロジェクト）
+
+- **ワークフロー**: `.github/workflows/ios-ci.yml`
+    - `push`（`main` / `feature/**`）および `pull_request`（base=`main`）で起動。
+    - ジョブ `build-and-test` が macOS 14 ランナー上で `Scripts/run-tests.sh` を実行し、`MapShoppingList` スキームのユニットテストを iPhone 15 Pro Max（iOS 17.5）シミュレータで実行する。
+    - ビルド前に `xcodebuild -resolvePackageDependencies` を実行し、SwiftPM 依存関係を確定させる。
+- **テストスクリプト**: `Scripts/run-tests.sh`
+    - シミュレータやスキームは環境変数 `DESTINATION` / `SCHEME` / `PROJECT_PATH` で上書き可能。
+    - CI では `GOOGLE_MAPS_API_KEY`（ダミー値）を渡し、Places 検索機能が未設定警告を出さないようにする。実運用時はリポジトリ Secrets 側で実キーを設定し、ジョブの環境変数に上書きする。
+- **成果物/レポート**: 現時点では生成なし。将来的に `xcresult` のアーカイブが必要になった場合は `actions/upload-artifact` を追加する。
+
+### 11.2 Android（参考・先行プロジェクト）
+
+- GitHub Actions 上で Gradle ビルド／テスト／配信を行う構成。詳細は Android プロジェクトの `android-*.yml` を参照。
