@@ -265,7 +265,6 @@ flowchart LR
 **notify_state**（通知制御）
 - `place_id` INTEGER PK FK→places(id) ON DELETE CASCADE
 - `last_notified_at` INTEGER NULL
-- `snooze_until` INTEGER NULL（現在は未使用・常にNULL）
 
 **app_settings**（将来拡張）
 - `key` TEXT PK

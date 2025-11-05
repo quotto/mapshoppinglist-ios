@@ -88,21 +88,13 @@ final class DomainUseCaseTests: XCTestCase {
         XCTAssertEqual(secondPlan.toUnregister.count, DomainConstants.geofenceMonitorLimit - 10)
     }
 
-    func testNotificationSnooze() throws {
+    func testShouldSendNotificationAlwaysTrue() throws {
         let useCase = ShouldSendNotificationUseCase()
         let now = Date()
-        
-        // スヌーズ中の場合は通知しない
-        let snoozedState = NotificationState(placeId: UUID(), lastNotifiedAt: now, snoozeUntil: now.addingTimeInterval(60))
-        XCTAssertThrowsError(try useCase.execute(state: snoozedState, now: now))
 
-        // スヌーズ期間が過ぎた場合は通知する
-        let expiredSnoozeState = NotificationState(placeId: UUID(), lastNotifiedAt: now, snoozeUntil: now.addingTimeInterval(-60))
-        XCTAssertTrue(try useCase.execute(state: expiredSnoozeState, now: now))
-        
-        // スヌーズが設定されていない場合は通知する
-        let normalState = NotificationState(placeId: UUID(), lastNotifiedAt: now, snoozeUntil: nil)
-        XCTAssertTrue(try useCase.execute(state: normalState, now: now))
+        let state = NotificationState(placeId: UUID(), lastNotifiedAt: now)
+        XCTAssertTrue(try useCase.execute(state: state, now: now))
+        XCTAssertTrue(try useCase.execute(state: nil, now: now))
     }
 
     func testMarkPlaceItemsPurchased() async throws {
@@ -124,4 +116,3 @@ final class DomainUseCaseTests: XCTestCase {
         XCTAssertEqual(updated?.isPurchased, true)
     }
 }
-

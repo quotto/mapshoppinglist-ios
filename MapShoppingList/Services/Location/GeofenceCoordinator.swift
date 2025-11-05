@@ -67,7 +67,7 @@ final class GeofenceCoordinator {
             } catch {
                 throw error
             }
-            let newState = NotificationState(placeId: placeId, lastNotifiedAt: now, snoozeUntil: state?.snoozeUntil)
+            let newState = NotificationState(placeId: placeId, lastNotifiedAt: now)
             try await notificationStateRepository.upsert(state: newState)
         } catch {
             // TODO: ログ収集などの実装を検討

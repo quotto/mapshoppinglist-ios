@@ -4,11 +4,8 @@ import Foundation
 public struct NotificationState: Equatable {
     public let placeId: UUID
     public var lastNotifiedAt: Date?
-    public var snoozeUntil: Date?
-
-    public init(placeId: UUID, lastNotifiedAt: Date?, snoozeUntil: Date?) {
+    public init(placeId: UUID, lastNotifiedAt: Date?) {
         self.placeId = placeId
         self.lastNotifiedAt = lastNotifiedAt
-        self.snoozeUntil = snoozeUntil
     }
 }

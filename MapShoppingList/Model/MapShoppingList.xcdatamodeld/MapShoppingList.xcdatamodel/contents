@@ -29,7 +29,6 @@
     </entity>
     <entity name="NotifyState" representedClassName="NotifyState" syncable="YES">
         <attribute name="lastNotifiedAt" optional="YES" attributeType="Date"/>
-        <attribute name="snoozeUntil" optional="YES" attributeType="Date"/>
         <relationship name="place" optional="NO" minCount="1" maxCount="1" deletionRule="Cascade" destinationEntity="Place" inverseName="notifyState" inverseEntity="Place"/>
         <uniquenessConstraints>
             <constraint>

@@ -18,8 +18,7 @@ final class CoreDataNotificationStateRepository: NotificationStateRepository {
             guard let stateObject = try context.fetch(request).first else { return nil }
             return NotificationState(
                 placeId: placeId,
-                lastNotifiedAt: stateObject.value(forKey: ManagedKeys.NotifyState.lastNotifiedAt) as? Date,
-                snoozeUntil: stateObject.value(forKey: ManagedKeys.NotifyState.snoozeUntil) as? Date
+                lastNotifiedAt: stateObject.value(forKey: ManagedKeys.NotifyState.lastNotifiedAt) as? Date
             )
         }
     }
@@ -43,7 +42,6 @@ final class CoreDataNotificationStateRepository: NotificationStateRepository {
                 object.setValue(place, forKey: ManagedKeys.NotifyState.place)
             }
             object.setValue(state.lastNotifiedAt, forKey: ManagedKeys.NotifyState.lastNotifiedAt)
-            object.setValue(state.snoozeUntil, forKey: ManagedKeys.NotifyState.snoozeUntil)
             try context.saveIfNeeded()
         }
     }
