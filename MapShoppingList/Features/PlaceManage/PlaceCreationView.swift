@@ -22,7 +22,7 @@ struct PlaceCreationView: View {
                 if let message = viewModel.errorMessage {
                     Section {
                         Text(message)
-                            .foregroundColor(.red)
+                            .foregroundColor(.appError)
                     }
                 }
             }

@@ -160,13 +160,13 @@ struct PlaceSearchView: View {
 
             if let geocodeMessage = viewModel.geocodeErrorMessage {
                 Text(geocodeMessage)
-                    .foregroundStyle(.red)
+                    .foregroundColor(.appError)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             if let formMessage = viewModel.formErrorMessage {
                 Text(formMessage)
-                    .foregroundStyle(.red)
+                    .foregroundColor(.appError)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }

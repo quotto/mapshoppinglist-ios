@@ -29,12 +29,13 @@ struct PlaceManagementView: View {
                 }
                 .task { await viewModel.load() }
                 .alert("削除確認", isPresented: deleteAlertBinding) {
-                    Button("削除", role: .destructive) {
+                    Button("削除") {
                         if let place = showDeleteAlert {
                             Task { await viewModel.delete(place: place) }
                         }
                         showDeleteAlert = nil
                     }
+                    .foregroundColor(.appTertiary)
                     Button("キャンセル", role: .cancel) { showDeleteAlert = nil }
                 } message: {
                     Text("選択した地点を削除します。よろしいですか？")
