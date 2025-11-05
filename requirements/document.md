@@ -170,7 +170,7 @@ flowchart LR
 - **トリガー**: Geofencing API の **ENTER**
 - **条件**:
     - そのお店に紐づく**未購入アイテムが1件以上**あること
-    - **クールダウン中でない**こと（MVP既定: 同一点で**2時間**再通知しない）
+    - **スヌーズ中でない**こと（将来のスヌーズ機能のための予約）
 - **内容**:
     - タイトル: 「近くに **{お店名}**」
     - 本文: `買えるもの: A, B, C…（最大N行; 以降は「ほかX件」）`
@@ -304,8 +304,6 @@ flowchart LR
   GeofencingClient.add(toAdd); GeofencingClient.remove(toRemove)
   updateSyncTable()
   ```
-- **クールダウン**
-    - `last_notified_at + 5min > now` の場合は通知をスキップ（固定5分）
 
 ---
 

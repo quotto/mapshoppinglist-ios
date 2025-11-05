@@ -14,6 +14,6 @@ public enum DomainError: Error, Equatable {
     case linkNotFound
     /// ジオフェンス登録可能件数を超えた。
     case geofenceLimitExceeded(max: Int)
-    /// 通知がクールダウン中である。
-    case notificationCooldown
+    /// 通知が抑制されている（スヌーズ中など）。
+    case notificationSuppressed
 }
