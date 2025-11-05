@@ -23,17 +23,17 @@ struct PlaceManagementView: View {
                             if place.isActive {
                                 Text("アクティブ")
                                     .font(.caption)
-                                    .foregroundStyle(.green)
+                                    .foregroundStyle(.appSuccess)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(Color.green.opacity(0.12), in: Capsule())
+                                    .background(Color.appSuccess.opacity(0.15), in: Capsule())
                             }
                             Spacer()
                             Button {
                                 showDeleteAlert = place
                             } label: {
                                 Image(systemName: "trash")
-                                    .foregroundStyle(.red)
+                                    .foregroundStyle(.appError)
                             }
                             .buttonStyle(.borderless)
                             .accessibilityLabel("\(place.name)を削除")

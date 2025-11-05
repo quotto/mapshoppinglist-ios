@@ -51,7 +51,7 @@ struct PlaceSearchView: View {
                         .font(.footnote)
                         .padding(12)
                         .frame(maxWidth: .infinity)
-                        .background(Color.red.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                        .background(Color.appErrorContainer.opacity(0.8), in: RoundedRectangle(cornerRadius: 12))
                 }
                 .padding(12)
             }
@@ -69,7 +69,7 @@ struct PlaceSearchView: View {
             if viewModel.isLoadingDetails || viewModel.isGeocoding {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black.opacity(0.1))
+                    .background(Color.appOnSurface.opacity(0.1))
                     .cornerRadius(12)
             }
         }
@@ -99,7 +99,7 @@ struct PlaceSearchView: View {
             if let message = viewModel.searchErrorMessage {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
-                        .foregroundColor(.orange)
+                        .foregroundColor(.appTertiary)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(message)
                             .font(.footnote)
@@ -112,7 +112,7 @@ struct PlaceSearchView: View {
                     }
                 }
                 .padding(8)
-                .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                .background(Color.appTertiaryContainer.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
             }
         }
         .padding(12)
@@ -155,7 +155,7 @@ struct PlaceSearchView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(12)
-                    .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                    .background(Color.appSecondaryContainer.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
             }
 
             if let geocodeMessage = viewModel.geocodeErrorMessage {

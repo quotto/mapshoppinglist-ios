@@ -80,7 +80,7 @@ private struct PermissionPromptCard: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: icon)
                     .font(.title2)
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(Color.appPrimary)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.headline)
@@ -110,6 +110,6 @@ private struct PermissionPromptCard: View {
             }
         }
         .padding(16)
-        .background(Color.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
+        .background(Color.appSecondaryContainer.opacity(0.5), in: RoundedRectangle(cornerRadius: 16))
     }
 }

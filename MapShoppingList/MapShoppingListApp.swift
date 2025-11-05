@@ -27,6 +27,7 @@ struct MapShoppingListApp: App {
         WindowGroup {
             ContentView(environment: environment)
                 .environment(\.appEnvironment, environment)
+                .tint(.appPrimary)
                 .alert("設定エラー", isPresented: Binding(
                     get: { configurationWarning != nil },
                     set: { if !$0 { configurationWarning = nil } }
