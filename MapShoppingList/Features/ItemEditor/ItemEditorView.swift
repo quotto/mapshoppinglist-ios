@@ -87,12 +87,11 @@ struct ItemEditorView: View {
             .overlay { ProgressView().opacity(viewModel.isLoading ? 1 : 0) }
             .task { await viewModel.load() }
             .confirmationDialog("アイテムを削除しますか？", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
-                Button("削除") {
+                Button("削除", role: .destructive) {
                     Task {
                         if await viewModel.deleteCurrentItem() { dismiss() }
                     }
                 }
-                .foregroundColor(.appTertiary)
                 Button("キャンセル", role: .cancel) {}
             }
             .sheet(isPresented: $showPlaceSearch) {

@@ -29,7 +29,7 @@ struct PlaceManagementView: View {
                 }
                 .task { await viewModel.load() }
                 .alert("削除確認", isPresented: deleteAlertBinding) {
-                    Button("削除") {
+                    Button("削除",role: .destructive) {
                         if let place = showDeleteAlert {
                             Task { await viewModel.delete(place: place) }
                         }
@@ -75,7 +75,7 @@ struct PlaceManagementView: View {
                     showDeleteAlert = place
                 } label: {
                     Image(systemName: "trash")
-                        .foregroundColor(.appError)
+                        .foregroundColor(.appTertiary)
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel("\(place.name)を削除")
