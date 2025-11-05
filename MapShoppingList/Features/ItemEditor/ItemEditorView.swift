@@ -122,9 +122,11 @@ private struct SelectedPlaceRow: View {
                 }
             }
             Spacer()
-            Button(role: .destructive, action: remove) {
+            Button(action: remove) {
                 Image(systemName: "minus.circle.fill")
+                    .foregroundColor(.appTertiary)
             }
+            .buttonStyle(.borderless)
         }
     }
 }
