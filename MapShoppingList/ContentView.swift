@@ -16,6 +16,7 @@ struct ContentView: View {
     @StateObject private var viewModel: ShoppingListViewModel
     @StateObject private var permissionViewModel: PermissionStatusViewModel
     @State private var editorConfig: EditorConfig?
+    @State private var showSidebar = false
     @State private var showPlaceManagement = false
     @State private var showPrivacyPolicy = false
     @State private var showOssLicenses = false
@@ -86,29 +87,17 @@ struct ContentView: View {
             .overlay { ProgressView().opacity(viewModel.isLoading ? 1 : 0) }
             .navigationTitle("買い忘れリスト")
             .toolbar {
-                ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button { editorConfig = EditorConfig(mode: .create) } label: {
-                        Image(systemName: "plus")
-                    }
-                    Menu {
-                        Button {
-                            showPlaceManagement = true
-                        } label: {
-                            Label("地点管理", systemImage: "mappin.and.ellipse")
-                        }
-                        Button {
-                            showPrivacyPolicy = true
-                        } label: {
-                            Label("プライバシーポリシー", systemImage: "lock.doc")
-                        }
-                        Button {
-                            showOssLicenses = true
-                        } label: {
-                            Label("OSSライセンス", systemImage: "doc.text")
-                        }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showSidebar = true
                     } label: {
                         Image(systemName: "line.3.horizontal")
                             .accessibilityLabel("メニュー")
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { editorConfig = EditorConfig(mode: .create) } label: {
+                        Image(systemName: "plus")
                     }
                 }
             }
@@ -140,6 +129,70 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showOssLicenses) {
                 OssLicensesView()
+            }
+            .sheet(isPresented: $showSidebar) {
+                SidebarMenuView(
+                    showPlaceManagement: $showPlaceManagement,
+                    showPrivacyPolicy: $showPrivacyPolicy,
+                    showOssLicenses: $showOssLicenses,
+                    isPresented: $showSidebar
+                )
+            }
+        }
+    }
+}
+
+/// サイドバーメニュービュー
+private struct SidebarMenuView: View {
+    @Binding var showPlaceManagement: Bool
+    @Binding var showPrivacyPolicy: Bool
+    @Binding var showOssLicenses: Bool
+    @Binding var isPresented: Bool
+    
+    var body: some View {
+        NavigationView {
+            List {
+                Button {
+                    isPresented = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showPlaceManagement = true
+                    }
+                } label: {
+                    Label("地点管理", systemImage: "mappin.and.ellipse")
+                        .foregroundStyle(Color.appOnSurface)
+                }
+                
+                Button {
+                    isPresented = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showPrivacyPolicy = true
+                    }
+                } label: {
+                    Label("プライバシーポリシー", systemImage: "lock.doc")
+                        .foregroundStyle(Color.appOnSurface)
+                }
+                
+                Button {
+                    isPresented = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showOssLicenses = true
+                    }
+                } label: {
+                    Label("OSSライセンス", systemImage: "doc.text")
+                        .foregroundStyle(Color.appOnSurface)
+                }
+            }
+            .navigationTitle("メニュー")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        isPresented = false
+                    } label: {
+                        Image(systemName: "xmark")
+                            .accessibilityLabel("閉じる")
+                    }
+                }
             }
         }
     }
