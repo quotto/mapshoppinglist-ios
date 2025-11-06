@@ -107,7 +107,8 @@ struct ContentView: View {
                             Label("OSSライセンス", systemImage: "doc.text")
                         }
                     } label: {
-                        Image(systemName: "ellipsis.circle")
+                        Image(systemName: "line.3.horizontal")
+                            .accessibilityLabel("メニュー")
                     }
                 }
             }
