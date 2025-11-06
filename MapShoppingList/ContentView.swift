@@ -28,7 +28,8 @@ struct ContentView: View {
     }
 
     var body: some View {
-        NavigationView {
+        ZStack {
+            NavigationView {
             List {
                 if permissionViewModel.needsLocationPrompt || permissionViewModel.needsNotificationPrompt {
                     PermissionPromptSection(viewModel: permissionViewModel)
@@ -89,7 +90,9 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
-                        showSidebar = true
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showSidebar = true
+                        }
                     } label: {
                         Image(systemName: "line.3.horizontal")
                             .accessibilityLabel("メニュー")
@@ -130,71 +133,143 @@ struct ContentView: View {
             .sheet(isPresented: $showOssLicenses) {
                 OssLicensesView()
             }
-            .sheet(isPresented: $showSidebar) {
-                SidebarMenuView(
-                    showPlaceManagement: $showPlaceManagement,
-                    showPrivacyPolicy: $showPrivacyPolicy,
-                    showOssLicenses: $showOssLicenses,
-                    isPresented: $showSidebar
-                )
             }
+            
+            // 左側からスライドインするサイドバー
+            SlidingSidebarMenuView(
+                showPlaceManagement: $showPlaceManagement,
+                showPrivacyPolicy: $showPrivacyPolicy,
+                showOssLicenses: $showOssLicenses,
+                isPresented: $showSidebar
+            )
         }
     }
 }
 
-/// サイドバーメニュービュー
-private struct SidebarMenuView: View {
+/// 左側からスライドインするサイドバーメニュー
+private struct SlidingSidebarMenuView: View {
     @Binding var showPlaceManagement: Bool
     @Binding var showPrivacyPolicy: Bool
     @Binding var showOssLicenses: Bool
     @Binding var isPresented: Bool
     
     var body: some View {
-        NavigationView {
-            List {
-                Button {
-                    isPresented = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        showPlaceManagement = true
+        ZStack {
+            // 背景のオーバーレイ（タップで閉じる）
+            if isPresented {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            isPresented = false
+                        }
                     }
-                } label: {
-                    Label("地点管理", systemImage: "mappin.and.ellipse")
-                        .foregroundStyle(Color.appOnSurface)
-                }
-                
-                Button {
-                    isPresented = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        showPrivacyPolicy = true
-                    }
-                } label: {
-                    Label("プライバシーポリシー", systemImage: "lock.doc")
-                        .foregroundStyle(Color.appOnSurface)
-                }
-                
-                Button {
-                    isPresented = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        showOssLicenses = true
-                    }
-                } label: {
-                    Label("OSSライセンス", systemImage: "doc.text")
-                        .foregroundStyle(Color.appOnSurface)
-                }
+                    .transition(.opacity)
             }
-            .navigationTitle("メニュー")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        isPresented = false
-                    } label: {
-                        Image(systemName: "xmark")
-                            .accessibilityLabel("閉じる")
+            
+            // サイドバーメニュー
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 0) {
+                    // ヘッダー
+                    HStack {
+                        Text("メニュー")
+                            .font(.headline)
+                            .foregroundStyle(Color.appOnSurface)
+                        Spacer()
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isPresented = false
+                            }
+                        } label: {
+                            Image(systemName: "xmark")
+                                .foregroundStyle(Color.appOnSurface)
+                                .accessibilityLabel("閉じる")
+                        }
                     }
+                    .padding()
+                    .background(Color.appSurface)
+                    
+                    Divider()
+                    
+                    // メニュー項目
+                    VStack(alignment: .leading, spacing: 0) {
+                        MenuItemButton(
+                            icon: "mappin.and.ellipse",
+                            title: "地点管理"
+                        ) {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isPresented = false
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showPlaceManagement = true
+                            }
+                        }
+                        
+                        Divider().padding(.leading, 56)
+                        
+                        MenuItemButton(
+                            icon: "lock.doc",
+                            title: "プライバシーポリシー"
+                        ) {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isPresented = false
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showPrivacyPolicy = true
+                            }
+                        }
+                        
+                        Divider().padding(.leading, 56)
+                        
+                        MenuItemButton(
+                            icon: "doc.text",
+                            title: "OSSライセンス"
+                        ) {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isPresented = false
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showOssLicenses = true
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .background(Color.appSurface)
                 }
+                .frame(width: 280)
+                .background(Color.appSurface)
+                .offset(x: isPresented ? 0 : -280)
+                
+                Spacer()
             }
         }
+        .animation(.easeInOut(duration: 0.3), value: isPresented)
+    }
+}
+
+/// メニュー項目ボタン
+private struct MenuItemButton: View {
+    let icon: String
+    let title: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundStyle(Color.appOnSurface)
+                    .frame(width: 24)
+                Text(title)
+                    .foregroundStyle(Color.appOnSurface)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
