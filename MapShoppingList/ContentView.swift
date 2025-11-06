@@ -30,7 +30,8 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             NavigationView {
-            List {
+            ZStack(alignment: .bottomTrailing) {
+                List {
                 if permissionViewModel.needsLocationPrompt || permissionViewModel.needsNotificationPrompt {
                     PermissionPromptSection(viewModel: permissionViewModel)
                 }
@@ -98,11 +99,6 @@ struct ContentView: View {
                             .accessibilityLabel("メニュー")
                     }
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { editorConfig = EditorConfig(mode: .create) } label: {
-                        Image(systemName: "plus")
-                    }
-                }
             }
             .task {
                 await permissionViewModel.refreshStatuses()
@@ -133,6 +129,14 @@ struct ContentView: View {
             .sheet(isPresented: $showOssLicenses) {
                 OssLicensesView()
             }
+                
+                // フローティングアクションボタン
+                FloatingActionButton {
+                    editorConfig = EditorConfig(mode: .create)
+                }
+                .padding(.trailing, 16)
+                .padding(.bottom, 16)
+            }
             }
             
             // 左側からスライドインするサイドバー
@@ -143,6 +147,26 @@ struct ContentView: View {
                 isPresented: $showSidebar
             )
         }
+    }
+}
+
+/// フローティングアクションボタン（Android版と同様に右下配置）
+private struct FloatingActionButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button {
+            action()
+        } label: {
+            Image(systemName: "plus")
+                .font(.title2)
+                .foregroundStyle(Color.appOnTertiary)
+                .frame(width: 56, height: 56)
+                .background(Color.appPrimaryContainer)
+                .clipShape(Circle())
+                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+        }
+        .accessibilityLabel("アイテムを追加")
     }
 }
 
