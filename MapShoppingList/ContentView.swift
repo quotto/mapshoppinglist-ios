@@ -245,6 +245,7 @@ private struct SlidingSidebarMenuView: View {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: isPresented)
+        .allowsHitTesting(isPresented)
     }
 }
 
