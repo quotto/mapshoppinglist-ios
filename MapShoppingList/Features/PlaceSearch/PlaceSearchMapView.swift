@@ -56,9 +56,9 @@ struct PlaceSearchMapView: UIViewRepresentable {
         marker.map = mapView
 
         let circle = GMSCircle(position: coordinate, radius: 100)
-        circle.fillColor = UIColor.systemBlue.withAlphaComponent(0.1)
-        circle.strokeColor = UIColor.systemBlue
-        circle.strokeWidth = 1
+        circle.fillColor = UIColor.appPrimaryLight.withAlphaComponent(0.15)
+        circle.strokeColor = UIColor.appPrimary
+        circle.strokeWidth = 1.5
         circle.map = mapView
     }
 }

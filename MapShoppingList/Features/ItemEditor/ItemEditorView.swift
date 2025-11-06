@@ -52,7 +52,7 @@ struct ItemEditorView: View {
                 if let message = viewModel.errorMessage {
                     Section {
                         Text(message)
-                            .foregroundStyle(.red)
+                            .foregroundColor(.appError)
                     }
                 }
             }
@@ -72,10 +72,11 @@ struct ItemEditorView: View {
                 }
                 ToolbarItem(placement: .bottomBar) {
                     if case .edit = mode {
-                        Button(role: .destructive) {
+                        Button {
                             showDeleteConfirmation = true
                         } label: {
                             Label("アイテムを削除", systemImage: "trash")
+                                .foregroundColor(.appTertiary)
                                 .frame(maxWidth: .infinity)
                         }
                     } else {
@@ -122,9 +123,11 @@ private struct SelectedPlaceRow: View {
                 }
             }
             Spacer()
-            Button(role: .destructive, action: remove) {
+            Button(action: remove) {
                 Image(systemName: "minus.circle.fill")
+                    .foregroundColor(.appTertiary)
             }
+            .buttonStyle(.borderless)
         }
     }
 }
