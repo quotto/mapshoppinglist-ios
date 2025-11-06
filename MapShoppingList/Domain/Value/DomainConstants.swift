@@ -7,6 +7,4 @@ public enum DomainConstants {
     public static let geofenceMonitorLimit: Int = 20
     /// ジオフェンス半径（メートル）。
     public static let geofenceRadius: Double = 100.0
-    /// 通知クールダウン秒（Android仕様の2時間を継承）。
-    public static let notificationCooldownInterval: TimeInterval = 2 * 60 * 60
 }

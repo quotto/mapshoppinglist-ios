@@ -29,7 +29,6 @@ struct ManagedKeys {
         static let entityName = "NotifyState"
         static let place = "place"
         static let lastNotifiedAt = "lastNotifiedAt"
-        static let snoozeUntil = "snoozeUntil"
     }
 }
 

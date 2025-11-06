@@ -88,14 +88,13 @@ final class DomainUseCaseTests: XCTestCase {
         XCTAssertEqual(secondPlan.toUnregister.count, DomainConstants.geofenceMonitorLimit - 10)
     }
 
-    func testNotificationCooldown() throws {
+    func testShouldSendNotificationAlwaysTrue() throws {
         let useCase = ShouldSendNotificationUseCase()
         let now = Date()
-        let state = NotificationState(placeId: UUID(), lastNotifiedAt: now.addingTimeInterval(-DomainConstants.notificationCooldownInterval + 10), snoozeUntil: nil)
-        XCTAssertThrowsError(try useCase.execute(state: state, now: now))
 
-        let oldState = NotificationState(placeId: UUID(), lastNotifiedAt: now.addingTimeInterval(-DomainConstants.notificationCooldownInterval - 10), snoozeUntil: nil)
-        XCTAssertTrue(try useCase.execute(state: oldState, now: now))
+        let state = NotificationState(placeId: UUID(), lastNotifiedAt: now)
+        XCTAssertTrue(try useCase.execute(state: state, now: now))
+        XCTAssertTrue(try useCase.execute(state: nil, now: now))
     }
 
     func testMarkPlaceItemsPurchased() async throws {
@@ -117,4 +116,3 @@ final class DomainUseCaseTests: XCTestCase {
         XCTAssertEqual(updated?.isPurchased, true)
     }
 }
-
