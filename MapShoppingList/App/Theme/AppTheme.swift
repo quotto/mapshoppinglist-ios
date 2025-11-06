@@ -1,42 +1,5 @@
 import SwiftUI
-
-// MARK: - Environment Key
-
-/// アプリのカラースキームをEnvironmentから取得するためのキー
-private struct AppColorSchemeKey: EnvironmentKey {
-    static let defaultValue: ColorSchemeProvider = ColorSchemeProvider()
-}
-
-extension EnvironmentValues {
-    /// アプリのカラースキーム（ライト/ダーク切り替え対応）
-    var appColorScheme: ColorSchemeProvider {
-        get { self[AppColorSchemeKey.self] }
-        set { self[AppColorSchemeKey.self] = newValue }
-    }
-}
-
-// MARK: - Color Scheme Provider
-
-/// カラースキームプロバイダー
-/// ライトモード/ダークモードに応じたカラースキームを提供
-struct ColorSchemeProvider {
-    @Environment(\.colorScheme) private var systemColorScheme
-    
-    /// 現在のカラースキーム（ライト/ダーク）
-    var current: Any {
-        systemColorScheme == .dark ? AppColors.dark : AppColors.light
-    }
-    
-    /// ライトモード用カラースキーム
-    var light: AppColors.LightScheme {
-        AppColors.light
-    }
-    
-    /// ダークモード用カラースキーム
-    var dark: AppColors.DarkScheme {
-        AppColors.dark
-    }
-}
+import UIKit
 
 // MARK: - Color Extension
 
