@@ -101,12 +101,15 @@ struct ContentView: View {
                 }
             }
             .task {
-                await permissionViewModel.refreshStatuses()
-                await permissionViewModel.requestLocationAuthorization()
+                if LaunchArguments.isUITesting == false {
+                    await permissionViewModel.refreshStatuses()
+                    await permissionViewModel.requestLocationAuthorization()
+                    await environment.geofenceCoordinator.syncActiveGeofences()
+                }
                 await viewModel.load()
-                await environment.geofenceCoordinator.syncActiveGeofences()
             }
             .onReceive(NotificationCenter.default.publisher(for: .geofenceNeedsSync)) { _ in
+                guard LaunchArguments.isUITesting == false else { return }
                 Task { await environment.geofenceCoordinator.syncActiveGeofences() }
             }
             .alert("エラー", isPresented: Binding<Bool>(

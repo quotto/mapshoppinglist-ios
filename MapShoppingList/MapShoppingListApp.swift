@@ -14,13 +14,23 @@ struct MapShoppingListApp: App {
     private let environment: AppEnvironment
 
     init() {
-        let result = MapServicesConfigurator.configure()
-        AppEnvironment.configureShared(
-            placesSearchService: result.placesService,
-            geocodingService: result.geocodingService
-        )
-        environment = AppEnvironment.shared
-        _configurationWarning = State(initialValue: result.warningMessage)
+        if LaunchArguments.isUITesting {
+            AppEnvironment.configureShared(
+                stack: CoreDataStack.makeInMemory(),
+                placesSearchService: UnavailablePlacesSearchService(reason: "UITests"),
+                geocodingService: UnavailableGeocodingService(reason: "UITests")
+            )
+            environment = AppEnvironment.shared
+            _configurationWarning = State(initialValue: nil)
+        } else {
+            let result = MapServicesConfigurator.configure()
+            AppEnvironment.configureShared(
+                placesSearchService: result.placesService,
+                geocodingService: result.geocodingService
+            )
+            environment = AppEnvironment.shared
+            _configurationWarning = State(initialValue: result.warningMessage)
+        }
     }
 
     var body: some Scene {

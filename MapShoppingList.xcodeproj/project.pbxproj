@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A6A4DDC5ADF7447DA426520D /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = DF1D5BD438B146A19B25138B /* GoogleMaps */; };
 		F402FB66CE16452E87A6EF6B /* GooglePlaces in Frameworks */ = {isa = PBXBuildFile; productRef = F80F050FDA744D41964D817A /* GooglePlaces */; };
+		F9D0D8C62D9E3D9100A1E3A4 /* MapShoppingListUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D0D8C72D9E3D9100A1E3A4 /* MapShoppingListUITests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -19,11 +20,28 @@
 			remoteGlobalIDString = 4B5C6A1F2EB116A5003D3B73;
 			remoteInfo = MapShoppingList;
 		};
+		F9D0D8D32D9E3D9100A1E3A4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B5C6A182EB116A5003D3B73 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4B5C6A1F2EB116A5003D3B73;
+			remoteInfo = MapShoppingList;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		F9D0D8D42D9E3D9100A1E3A4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4B5C6A1F2EB116A5003D3B73 /* MapShoppingList */;
+			targetProxy = F9D0D8D32D9E3D9100A1E3A4 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXFileReference section */
 		4B5C6A202EB116A5003D3B73 /* MapShoppingList.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MapShoppingList.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		88F2E597BD7348A263AC1DFA /* MapShoppingListTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapShoppingListTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F9D0D8C72D9E3D9100A1E3A4 /* MapShoppingListUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapShoppingListUITests.swift; sourceTree = "<group>"; };
+		F9D0D8C82D9E3D9100A1E3A4 /* MapShoppingListUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapShoppingListUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -35,6 +53,11 @@
 		C107B63422E99AC859B1A343 /* MapShoppingListTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = MapShoppingListTests;
+			sourceTree = "<group>";
+		};
+		F9D0D8C92D9E3D9100A1E3A4 /* MapShoppingListUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MapShoppingListUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -56,6 +79,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F9D0D8CB2D9E3D9100A1E3A4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -64,6 +94,7 @@
 			children = (
 				4B5C6A222EB116A5003D3B73 /* MapShoppingList */,
 				C107B63422E99AC859B1A343 /* MapShoppingListTests */,
+				F9D0D8C92D9E3D9100A1E3A4 /* MapShoppingListUITests */,
 				4B5C6A212EB116A5003D3B73 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -73,6 +104,7 @@
 			children = (
 				4B5C6A202EB116A5003D3B73 /* MapShoppingList.app */,
 				88F2E597BD7348A263AC1DFA /* MapShoppingListTests.xctest */,
+				F9D0D8C82D9E3D9100A1E3A4 /* MapShoppingListUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -125,6 +157,27 @@
 			productReference = 4B5C6A202EB116A5003D3B73 /* MapShoppingList.app */;
 			productType = "com.apple.product-type.application";
 		};
+		F9D0D8CF2D9E3D9100A1E3A4 /* MapShoppingListUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F9D0D8D02D9E3D9100A1E3A4 /* Build configuration list for PBXNativeTarget "MapShoppingListUITests" */;
+			buildPhases = (
+				F9D0D8CA2D9E3D9100A1E3A4 /* Sources */,
+				F9D0D8CB2D9E3D9100A1E3A4 /* Frameworks */,
+				F9D0D8CC2D9E3D9100A1E3A4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F9D0D8D42D9E3D9100A1E3A4 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F9D0D8C92D9E3D9100A1E3A4 /* MapShoppingListUITests */,
+			);
+			name = MapShoppingListUITests;
+			productName = MapShoppingListUITests;
+			productReference = F9D0D8C82D9E3D9100A1E3A4 /* MapShoppingListUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -139,6 +192,9 @@
 						CreatedOnToolsVersion = 26.0.1;
 					};
 					4B5C6A1F2EB116A5003D3B73 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					F9D0D8CF2D9E3D9100A1E3A4 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
 				};
@@ -163,6 +219,7 @@
 			targets = (
 				4B5C6A1F2EB116A5003D3B73 /* MapShoppingList */,
 				443929EC1A6F7DD022AD4644 /* MapShoppingListTests */,
+				F9D0D8CF2D9E3D9100A1E3A4 /* MapShoppingListUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -176,6 +233,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CDEE54C6B242542E90B7D059 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F9D0D8CC2D9E3D9100A1E3A4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -196,6 +260,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F9D0D8CA2D9E3D9100A1E3A4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F9D0D8C62D9E3D9100A1E3A4 /* MapShoppingListUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -451,6 +523,52 @@
 			};
 			name = Release;
 		};
+		F9D0D8D12D9E3D9100A1E3A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MM4G8YRVBB;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.MapShoppingListUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MapShoppingList;
+			};
+			name = Debug;
+		};
+		F9D0D8D22D9E3D9100A1E3A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MM4G8YRVBB;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.MapShoppingListUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MapShoppingList;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -480,6 +598,15 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		F9D0D8D02D9E3D9100A1E3A4 /* Build configuration list for PBXNativeTarget "MapShoppingListUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F9D0D8D12D9E3D9100A1E3A4 /* Debug */,
+				F9D0D8D22D9E3D9100A1E3A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 

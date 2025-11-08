@@ -34,6 +34,20 @@
                ReferencedContainer = "container:MapShoppingList.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "F9D0D8CF2D9E3D9100A1E3A4"
+               BuildableName = "MapShoppingListUITests.xctest"
+               BlueprintName = "MapShoppingListUITests"
+               ReferencedContainer = "container:MapShoppingList.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -58,6 +72,16 @@
                BlueprintIdentifier = "443929EC1A6F7DD022AD4644"
                BuildableName = "MapShoppingListTests.xctest"
                BlueprintName = "MapShoppingListTests"
+               ReferencedContainer = "container:MapShoppingList.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "F9D0D8CF2D9E3D9100A1E3A4"
+               BuildableName = "MapShoppingListUITests.xctest"
+               BlueprintName = "MapShoppingListUITests"
                ReferencedContainer = "container:MapShoppingList.xcodeproj">
             </BuildableReference>
          </TestableReference>

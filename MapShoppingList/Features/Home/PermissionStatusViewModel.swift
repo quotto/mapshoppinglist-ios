@@ -22,8 +22,13 @@ final class PermissionStatusViewModel: ObservableObject {
         self.locationManager = locationManager
         self.notificationScheduler = notificationScheduler
         self.settingsOpener = settingsOpener
-        locationStatus = locationManager.authorizationStatus()
-        notificationStatus = .authorized
+        if LaunchArguments.isUITesting {
+            locationStatus = .authorizedAlways
+            notificationStatus = .authorized
+        } else {
+            locationStatus = locationManager.authorizationStatus()
+            notificationStatus = .authorized
+        }
     }
 
     convenience init(environment: AppEnvironment, settingsOpener: SettingsOpening = SystemSettingsOpener()) {
@@ -35,17 +40,20 @@ final class PermissionStatusViewModel: ObservableObject {
     }
 
     func refreshStatuses() async {
+        guard LaunchArguments.isUITesting == false else { return }
         locationStatus = locationManager.authorizationStatus()
         notificationStatus = await notificationScheduler.authorizationStatus()
     }
 
     func requestLocationAuthorization() async {
+        guard LaunchArguments.isUITesting == false else { return }
         isRequestingLocation = true
         locationStatus = await locationManager.requestAuthorization()
         isRequestingLocation = false
     }
 
     func requestNotificationAuthorization() async {
+        guard LaunchArguments.isUITesting == false else { return }
         isRequestingNotification = true
         notificationStatus = await notificationScheduler.requestAuthorization()
         isRequestingNotification = false
