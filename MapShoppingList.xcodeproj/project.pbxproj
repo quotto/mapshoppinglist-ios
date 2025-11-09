@@ -29,14 +29,6 @@
 		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXTargetDependency section */
-		F9D0D8D42D9E3D9100A1E3A4 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 4B5C6A1F2EB116A5003D3B73 /* MapShoppingList */;
-			targetProxy = F9D0D8D32D9E3D9100A1E3A4 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin PBXFileReference section */
 		4B5C6A202EB116A5003D3B73 /* MapShoppingList.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MapShoppingList.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		88F2E597BD7348A263AC1DFA /* MapShoppingListTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapShoppingListTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -96,6 +88,7 @@
 				C107B63422E99AC859B1A343 /* MapShoppingListTests */,
 				F9D0D8C92D9E3D9100A1E3A4 /* MapShoppingListUITests */,
 				4B5C6A212EB116A5003D3B73 /* Products */,
+				4BF8A11F2EBEE194004394A7 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -107,6 +100,14 @@
 				F9D0D8C82D9E3D9100A1E3A4 /* MapShoppingListUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		4BF8A11F2EBEE194004394A7 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				F9D0D8C72D9E3D9100A1E3A4 /* MapShoppingListUITests.swift */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -278,6 +279,11 @@
 			isa = PBXTargetDependency;
 			target = 4B5C6A1F2EB116A5003D3B73 /* MapShoppingList */;
 			targetProxy = 8A50E4C75993C41B1B0482A0 /* PBXContainerItemProxy */;
+		};
+		F9D0D8D42D9E3D9100A1E3A4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4B5C6A1F2EB116A5003D3B73 /* MapShoppingList */;
+			targetProxy = F9D0D8D32D9E3D9100A1E3A4 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
