@@ -2,8 +2,29 @@ import CoreData
 
 /// Core Dataスタックをまとめて管理するクラス。
 final class CoreDataStack {
+    /// 共有インスタンス生成を制御するロック。
+    private static let sharedLock = NSLock()
+    private static var sharedStorage: CoreDataStack?
+
     /// デフォルト共有インスタンス。
-    static let shared = CoreDataStack()
+    static var shared: CoreDataStack {
+        sharedLock.lock()
+        defer { sharedLock.unlock() }
+        if let stack = sharedStorage {
+            return stack
+        }
+        let stack = CoreDataStack()
+        sharedStorage = stack
+        return stack
+    }
+
+    /// テスト等で共有インスタンスを差し替える。
+    /// - Parameter stack: 利用したいスタック。`nil` を指定すると次回アクセス時に再生成される。
+    static func useShared(_ stack: CoreDataStack?) {
+        sharedLock.lock()
+        sharedStorage = stack
+        sharedLock.unlock()
+    }
 
     /// モデルファイル名。
     private static let modelName = "MapShoppingList"

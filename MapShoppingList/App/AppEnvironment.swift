@@ -3,12 +3,15 @@ import SwiftUI
 
 /// アプリ全体で利用する依存関係を束ねるコンテナ。
 final class AppEnvironment {
-    private static var sharedInstance: AppEnvironment = {
-        AppEnvironment(isSharedInstance: true)
-    }()
+    private static var sharedInstance: AppEnvironment?
 
     static var shared: AppEnvironment {
-        sharedInstance
+        if let environment = sharedInstance {
+            return environment
+        }
+        let environment = AppEnvironment(isSharedInstance: true)
+        sharedInstance = environment
+        return environment
     }
 
     static func configureShared(

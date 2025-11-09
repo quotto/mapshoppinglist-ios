@@ -3,6 +3,16 @@ import CoreData
 @testable import MapShoppingList
 
 final class CoreDataStackTests: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        CoreDataStack.useShared(nil)
+    }
+
+    override func tearDown() {
+        CoreDataStack.useShared(nil)
+        super.tearDown()
+    }
+
     /// インメモリ構成でもモデルが読み込めることを確認する。
     func testInMemoryStackLoadsModel() throws {
         let stack = CoreDataStack.makeInMemory()
