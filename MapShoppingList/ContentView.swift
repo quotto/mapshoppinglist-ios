@@ -83,6 +83,7 @@ struct ContentView: View {
                                 .padding(.top, 4)
                         }
                         .frame(maxWidth: .infinity)
+                        .accessibilityIdentifier(UITestIdentifiers.Home.emptyState)
                     }
                 }
             }
@@ -97,6 +98,7 @@ struct ContentView: View {
                     } label: {
                         Image(systemName: "line.3.horizontal")
                             .accessibilityLabel("メニュー")
+                            .accessibilityIdentifier(UITestIdentifiers.Home.menuButton)
                     }
                 }
             }
@@ -139,6 +141,7 @@ struct ContentView: View {
                 }
                 .padding(.trailing, 16)
                 .padding(.bottom, 16)
+                .accessibilityIdentifier(UITestIdentifiers.Home.fabAddItem)
             }
             }
             
@@ -312,6 +315,7 @@ private struct ShoppingItemRowView: View {
                     .foregroundStyle(item.isPurchased ? .green : .secondary)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier(UITestIdentifiers.Home.checkboxPrefix + item.title)
 
             VStack(alignment: .leading) {
                 Text(item.title)
@@ -325,5 +329,6 @@ private struct ShoppingItemRowView: View {
             Spacer()
         }
         .contentShape(Rectangle())
+        .accessibilityIdentifier(UITestIdentifiers.Home.itemRowPrefix + item.title)
     }
 }

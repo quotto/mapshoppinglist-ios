@@ -20,7 +20,9 @@ struct ItemEditorView: View {
             Form {
                 Section(header: Text("アイテム")) {
                     TextField("タイトル", text: $viewModel.title)
+                        .accessibilityIdentifier(UITestIdentifiers.ItemEditor.titleField)
                     TextField("メモ", text: $viewModel.note)
+                        .accessibilityIdentifier(UITestIdentifiers.ItemEditor.noteField)
                 }
 
                 Section(header: Text("紐付けるお店")) {
@@ -69,6 +71,7 @@ struct ItemEditorView: View {
                         }
                     }
                     .disabled(viewModel.isSaving)
+                    .accessibilityIdentifier(UITestIdentifiers.ItemEditor.saveButton)
                 }
                 ToolbarItem(placement: .bottomBar) {
                     if case .edit = mode {
