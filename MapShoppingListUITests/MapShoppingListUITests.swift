@@ -1,9 +1,31 @@
 import XCTest
-@testable import MapShoppingList
 
 final class MapShoppingListUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
+    }
+
+    private func assertExists(
+        _ element: XCUIElement,
+        in app: XCUIApplication,
+        timeout: TimeInterval = 5,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let exists = element.waitForExistence(timeout: timeout)
+        if exists == false {
+            let screenshot = XCUIScreen.main.screenshot()
+            let screenshotAttachment = XCTAttachment(screenshot: screenshot)
+            screenshotAttachment.name = "Screenshot-\(UUID().uuidString)"
+            screenshotAttachment.lifetime = .keepAlways
+            add(screenshotAttachment)
+
+            let treeAttachment = XCTAttachment(string: app.debugDescription)
+            treeAttachment.name = "ViewTree-\(UUID().uuidString)"
+            treeAttachment.lifetime = .keepAlways
+            add(treeAttachment)
+        }
+        XCTAssertTrue(exists, file: file, line: line)
     }
 
     private func launchApp() -> XCUIApplication {
@@ -17,20 +39,22 @@ final class MapShoppingListUITests: XCTestCase {
 
     private func addItem(app: XCUIApplication, title: String) {
         let addButton = app.buttons[UITestIdentifiers.Home.fabAddItem]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        assertExists(addButton, in: app)
         addButton.tap()
 
         let titleField = app.textFields[UITestIdentifiers.ItemEditor.titleField]
-        XCTAssertTrue(titleField.waitForExistence(timeout: 3))
+        assertExists(titleField, in: app)
         titleField.tap()
         titleField.typeText(title)
 
-        app.buttons[UITestIdentifiers.ItemEditor.saveButton].tap()
+        let saveButton = app.buttons[UITestIdentifiers.ItemEditor.saveButton]
+        assertExists(saveButton, in: app)
+        saveButton.tap()
     }
 
     func testEmptyStateVisibleOnLaunch() {
         let app = launchApp()
-        XCTAssertTrue(app.otherElements[UITestIdentifiers.Home.emptyState].waitForExistence(timeout: 3))
+        assertExists(app.otherElements[UITestIdentifiers.Home.emptyState], in: app)
     }
 
     func testCanAddItemWithoutPlace() {
@@ -38,18 +62,18 @@ final class MapShoppingListUITests: XCTestCase {
         let title = "りんご"
         addItem(app: app, title: title)
 
-        XCTAssertTrue(app.otherElements[UITestIdentifiers.Home.itemRowPrefix + title].waitForExistence(timeout: 3))
+        assertExists(app.otherElements[UITestIdentifiers.Home.itemRowPrefix + title], in: app)
     }
 
     func testShowsValidationErrorWhenTitleEmpty() {
         let app = launchApp()
-        let addButton = app.buttons[UITestIdentifiers.Home.fabAddItem]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
-        addButton.tap()
+        app.buttons[UITestIdentifiers.Home.fabAddItem].tap()
 
-        app.buttons[UITestIdentifiers.ItemEditor.saveButton].tap()
+        let saveButton = app.buttons[UITestIdentifiers.ItemEditor.saveButton]
+        assertExists(saveButton, in: app)
+        saveButton.tap()
 
-        XCTAssertTrue(app.staticTexts["タイトルを入力してください"].waitForExistence(timeout: 3))
+        assertExists(app.staticTexts["タイトルを入力してください"], in: app)
     }
 
     func testTogglePurchasedState() {
@@ -58,23 +82,23 @@ final class MapShoppingListUITests: XCTestCase {
         addItem(app: app, title: title)
 
         let checkbox = app.buttons[UITestIdentifiers.Home.checkboxPrefix + title]
-        XCTAssertTrue(checkbox.waitForExistence(timeout: 3))
+        assertExists(checkbox, in: app)
         checkbox.tap()
 
-        XCTAssertTrue(app.staticTexts["購入済み"].waitForExistence(timeout: 3))
+        assertExists(app.staticTexts["購入済み"], in: app)
     }
 
     func testHamburgerMenuOpensPrivacyPolicy() {
         let app = launchApp()
         let menuButton = app.buttons[UITestIdentifiers.Home.menuButton]
-        XCTAssertTrue(menuButton.waitForExistence(timeout: 3))
+        assertExists(menuButton, in: app)
         menuButton.tap()
 
         let privacyButton = app.buttons["プライバシーポリシー"]
-        XCTAssertTrue(privacyButton.waitForExistence(timeout: 3))
+        assertExists(privacyButton, in: app)
         privacyButton.tap()
 
         let privacyNavigationBar = app.navigationBars["プライバシーポリシー"]
-        XCTAssertTrue(privacyNavigationBar.waitForExistence(timeout: 3))
+        assertExists(privacyNavigationBar, in: app)
     }
 }

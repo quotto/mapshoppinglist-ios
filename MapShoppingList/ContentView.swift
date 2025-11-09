@@ -83,6 +83,7 @@ struct ContentView: View {
                                 .padding(.top, 4)
                         }
                         .frame(maxWidth: .infinity)
+                        .accessibilityElement(children: .ignore)
                         .accessibilityIdentifier(UITestIdentifiers.Home.emptyState)
                     }
                 }
@@ -329,6 +330,7 @@ private struct ShoppingItemRowView: View {
             Spacer()
         }
         .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
         .accessibilityIdentifier(UITestIdentifiers.Home.itemRowPrefix + item.title)
     }
 }
