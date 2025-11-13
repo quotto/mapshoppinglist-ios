@@ -1,11 +1,14 @@
-import XCTest
+import Testing
+import Foundation
 import CoreLocation
 import Combine
 @testable import MapShoppingList
 
+@Suite("PlaceSearchViewModelTests")
 @MainActor
-final class PlaceSearchViewModelTests: XCTestCase {
-    func testSearchSelectAndSavePlace() async throws {
+struct PlaceSearchViewModelTests {
+    @Test("search, select, and save place")
+    func searchSelectAndSavePlace() async throws {
         let session = PlacesAutocompleteSession(identifier: NSObject())
         let prediction = PlaceAutocompletePrediction(
             id: "test-place-id",
@@ -34,27 +37,28 @@ final class PlaceSearchViewModelTests: XCTestCase {
 
         viewModel.query = "テスト"
         await viewModel.performSearch()
-        XCTAssertEqual(viewModel.predictions.count, 1)
-        XCTAssertEqual(stubService.receivedSessions.count, 1)
+        #expect(viewModel.predictions.count == 1)
+        #expect(stubService.receivedSessions.count == 1)
         if let firstEntry = stubService.receivedSessions.first {
-            XCTAssertNil(firstEntry)
+            #expect(firstEntry == nil)
         } else {
-            XCTFail("セッションが記録されていません")
+            Issue.record("セッションが記録されていません")
         }
 
         await viewModel.selectPrediction(prediction)
-        XCTAssertEqual(viewModel.displayText, "テスト店舗")
-        XCTAssertNil(viewModel.searchErrorMessage)
-        XCTAssertFalse(viewModel.isSearchRetryable)
+        #expect(viewModel.displayText == "テスト店舗")
+        #expect(viewModel.searchErrorMessage == nil)
+        #expect(viewModel.isSearchRetryable == false)
 
         let savedPlace = await viewModel.saveSelectedPlace()
-        XCTAssertNotNil(savedPlace)
+        #expect(savedPlace != nil)
         let places = try await repository.fetchAllPlaces()
-        XCTAssertEqual(places.count, 1)
-        XCTAssertEqual(places.first?.name, "テスト店舗")
+        #expect(places.count == 1)
+        #expect(places.first?.name == "テスト店舗")
     }
 
-    func testMissingSelectionShowsError() async {
+    @Test("missing selection shows error")
+    func missingSelectionShowsError() async {
         let stubService = StubPlacesSearchService()
         stubService.autocompleteResult = .failure(PlacesSearchError.serviceUnavailable("キー未設定"))
 
@@ -66,16 +70,17 @@ final class PlaceSearchViewModelTests: XCTestCase {
 
         viewModel.query = "テスト"
         await viewModel.performSearch()
-        XCTAssertEqual(viewModel.predictions.count, 0)
-        XCTAssertEqual(viewModel.searchErrorMessage, "キー未設定")
-        XCTAssertTrue(viewModel.isSearchRetryable)
+        #expect(viewModel.predictions.isEmpty)
+        #expect(viewModel.searchErrorMessage == "キー未設定")
+        #expect(viewModel.isSearchRetryable)
 
         let result = await viewModel.saveSelectedPlace()
-        XCTAssertNil(result)
-        XCTAssertEqual(viewModel.formErrorMessage, "地点が選択されていません")
+        #expect(result == nil)
+        #expect(viewModel.formErrorMessage == "地点が選択されていません")
     }
 
-    func testUpdateCoordinateFromMapUsesGeocode() async {
+    @Test("updateCoordinateFromMap triggers reverse geocode")
+    func updateCoordinateFromMapUsesGeocode() async {
         let stubService = StubPlacesSearchService()
         let repository = InMemoryPlacesRepository()
         let useCase = CreatePlaceUseCase(placesRepository: repository)
@@ -83,16 +88,17 @@ final class PlaceSearchViewModelTests: XCTestCase {
         geocoder.result = .success(GeocodeResult(primaryText: "手動登録", secondaryText: "東京都千代田区"))
         let network = StubNetworkMonitor(isConnected: true)
         let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder, networkProvider: network)
-    
+
         let coordinate = CLLocationCoordinate2D(latitude: 35.0, longitude: 139.0)
         viewModel.updateCoordinateFromMap(coordinate)
         try? await Task.sleep(nanoseconds: 5_000_000)
 
-        XCTAssertEqual(viewModel.selectedCoordinate?.latitude, 35.0)
-        XCTAssertEqual(viewModel.displayText, "東京都千代田区")
+        #expect(viewModel.selectedCoordinate?.latitude == 35.0)
+        #expect(viewModel.displayText == "東京都千代田区")
     }
 
-    func testAutocompleteSessionIsReusedWhenQueryIsRefined() async {
+    @Test("autocomplete session is reused when refining query")
+    func autocompleteSessionIsReusedWhenQueryIsRefined() async {
         let firstSessionToken = NSObject()
         let firstSession = PlacesAutocompleteSession(identifier: firstSessionToken)
         let secondSession = PlacesAutocompleteSession(identifier: NSObject())
@@ -119,19 +125,25 @@ final class PlaceSearchViewModelTests: XCTestCase {
         viewModel.query = "テスト 店"
         await viewModel.performSearch()
 
-        XCTAssertEqual(stubService.receivedSessions.count, 2)
+        #expect(stubService.receivedSessions.count == 2)
         if let firstEntry = stubService.receivedSessions.first {
-            XCTAssertNil(firstEntry)
+            #expect(firstEntry == nil)
         } else {
-            XCTFail("1回目のセッションが記録されていません")
+            Issue.record("1回目のセッションが記録されていません")
         }
-        guard let secondEntry = stubService.receivedSessions.last, let reusedSession = secondEntry else {
-            return XCTFail("2回目のセッションが取得できません")
+        guard let secondEntry = stubService.receivedSessions.last else {
+            Issue.record("2回目のセッションが不足しています")
+            return
         }
-        XCTAssertTrue((reusedSession.identifier as AnyObject) === firstSession.identifier)
+        guard let reusedSession = secondEntry else {
+            Issue.record("2回目のセッションがnilです")
+            return
+        }
+        #expect((reusedSession.identifier as AnyObject) === firstSession.identifier as AnyObject)
     }
 
-    func testQuotaExceededErrorStopsRetry() async {
+    @Test("quota exceeded error disables retry")
+    func quotaExceededErrorStopsRetry() async {
         let stubService = StubPlacesSearchService()
         stubService.autocompleteResult = .failure(PlacesSearchError.quotaExceeded("利用上限に達しました"))
 
@@ -144,12 +156,13 @@ final class PlaceSearchViewModelTests: XCTestCase {
         viewModel.query = "テスト"
         await viewModel.performSearch()
 
-        XCTAssertEqual(viewModel.searchErrorMessage, "利用上限に達しました")
-        XCTAssertFalse(viewModel.isSearchRetryable)
-        XCTAssertFalse(viewModel.isPredictionListVisible)
+        #expect(viewModel.searchErrorMessage == "利用上限に達しました")
+        #expect(viewModel.isSearchRetryable == false)
+        #expect(viewModel.isPredictionListVisible == false)
     }
 
-    func testOfflineSearchShowsErrorImmediately() async {
+    @Test("offline search shows error immediately")
+    func offlineSearchShowsErrorImmediately() async {
         let stubService = StubPlacesSearchService()
         stubService.autocompleteResult = .success(
             PlacesAutocompleteResponse(session: PlacesAutocompleteSession(identifier: NSObject()), predictions: [])
@@ -164,16 +177,14 @@ final class PlaceSearchViewModelTests: XCTestCase {
         viewModel.query = "テスト"
         await viewModel.performSearch()
 
-        XCTAssertEqual(viewModel.searchErrorMessage, "オフラインのため検索できません")
-        XCTAssertFalse(viewModel.isSearchRetryable)
-        XCTAssertEqual(stubService.receivedSessions.count, 0)
+        #expect(viewModel.searchErrorMessage == "オフラインのため検索できません")
+        #expect(viewModel.isSearchRetryable == false)
+        #expect(stubService.receivedSessions.isEmpty)
     }
 }
 
 private final class StubNetworkMonitor: NetworkStatusProviding {
-    var isConnectedCurrent: Bool {
-        isConnected
-    }
+    var isConnectedCurrent: Bool { isConnected }
 
     var isConnectedPublisher: AnyPublisher<Bool, Never> {
         subject.eraseToAnyPublisher()

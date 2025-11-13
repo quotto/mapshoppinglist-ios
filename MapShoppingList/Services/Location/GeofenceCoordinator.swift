@@ -9,7 +9,7 @@ final class GeofenceCoordinator {
     private let shouldSendNotificationUseCase: ShouldSendNotificationUseCase
     private let buildGeofenceSyncPlanUseCase: BuildGeofenceSyncPlanUseCase
     private let geofenceRepository: GeofenceRegistryRepository
-    private let notificationScheduler: NotificationScheduler
+    private let notificationScheduler: NotificationScheduling
     private var eventSequence: Int = 0
 
     init(
@@ -20,7 +20,7 @@ final class GeofenceCoordinator {
         shouldSendNotificationUseCase: ShouldSendNotificationUseCase,
         buildGeofenceSyncPlanUseCase: BuildGeofenceSyncPlanUseCase,
         geofenceRepository: GeofenceRegistryRepository,
-        notificationScheduler: NotificationScheduler
+        notificationScheduler: NotificationScheduling
     ) {
         self.placesRepository = placesRepository
         self.loadAllPlacesUseCase = loadAllPlacesUseCase

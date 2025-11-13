@@ -1,15 +1,19 @@
-import XCTest
+import Testing
+import Foundation
 import UserNotifications
 @testable import MapShoppingList
 
+@Suite("NotificationSchedulerTests")
 @MainActor
-final class NotificationSchedulerTests: XCTestCase {
-    func testBodyForNoItems() {
+struct NotificationSchedulerTests {
+    @Test("body describes empty list")
+    func bodyForNoItems() async {
         let scheduler = NotificationScheduler(center: StubNotificationCenter())
-        XCTAssertEqual(scheduler.body(for: []), "買う予定のアイテムはありません")
+        #expect(scheduler.body(for: []) == "買う予定のアイテムはありません")
     }
 
-    func testBodyForMultipleItemsTruncatesOverFour() {
+    @Test("body truncates over four items")
+    func bodyForMultipleItemsTruncatesOverFour() async {
         let scheduler = NotificationScheduler(center: StubNotificationCenter())
         let items = (1...6).map { index in
             ShoppingItem(
@@ -23,10 +27,11 @@ final class NotificationSchedulerTests: XCTestCase {
             )
         }
         let body = scheduler.body(for: items)
-        XCTAssertEqual(body, "アイテム1, アイテム2, アイテム3, アイテム4 ほか2件")
+        #expect(body == "アイテム1, アイテム2, アイテム3, アイテム4 ほか2件")
     }
 
-    func testScheduleRemovesExistingAndAddsRequest() async {
+    @Test("schedule removes pending requests and enqueues new one")
+    func scheduleRemovesExistingAndAddsRequest() async {
         let center = StubNotificationCenter()
         let scheduler = NotificationScheduler(center: center)
         let place = Place(
@@ -44,22 +49,23 @@ final class NotificationSchedulerTests: XCTestCase {
 
         await scheduler.schedule(place: place, items: items)
 
-        XCTAssertEqual(center.removedIdentifiers, ["place_\(place.id.uuidString)"])
-        XCTAssertEqual(center.addedRequests.count, 1)
-        XCTAssertEqual(center.addedRequests.first?.content.body, "牛乳")
-        XCTAssertEqual(center.addedRequests.first?.content.title, "近くに スーパー")
+        #expect(center.removedIdentifiers == ["place_\(place.id.uuidString)"])
+        #expect(center.addedRequests.count == 1)
+        #expect(center.addedRequests.first?.content.body == "牛乳")
+        #expect(center.addedRequests.first?.content.title == "近くに スーパー")
     }
 
-    func testRequestAuthorizationRequestsWhenNotDetermined() async {
+    @Test("requestAuthorization requests when notDetermined")
+    func requestAuthorizationRequestsWhenNotDetermined() async {
         let center = StubNotificationCenter()
         center.status = .notDetermined
         let scheduler = NotificationScheduler(center: center)
 
         let result = await scheduler.requestAuthorization()
 
-        XCTAssertEqual(center.requestedOptions, [.alert, .sound, .badge])
-        XCTAssertEqual(result, .authorized)
-        XCTAssertEqual(center.status, .authorized)
+        #expect(center.requestedOptions == [.alert, .sound, .badge])
+        #expect(result == .authorized)
+        #expect(center.status == .authorized)
     }
 }
 

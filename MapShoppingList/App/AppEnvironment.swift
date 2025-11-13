@@ -2,10 +2,11 @@ import Foundation
 import SwiftUI
 
 /// アプリ全体で利用する依存関係を束ねるコンテナ。
+@MainActor
 final class AppEnvironment {
     private static var sharedInstance: AppEnvironment?
 
-    static var shared: AppEnvironment {
+    @MainActor static var shared: AppEnvironment {
         if let environment = sharedInstance {
             return environment
         }
@@ -14,15 +15,23 @@ final class AppEnvironment {
         return environment
     }
 
-    static func configureShared(
+    @MainActor static func configureShared(
         stack: CoreDataStack = .shared,
         placesSearchService: PlacesSearchService,
-        geocodingService: GeocodingService
+        geocodingService: GeocodingService,
+        geofenceRegistryRepository: GeofenceRegistryRepository? = nil,
+        notificationScheduler: NotificationScheduling? = nil,
+        locationPermissionManager: LocationPermissionManager? = nil,
+        networkMonitor: NetworkMonitor? = nil
     ) {
         sharedInstance = AppEnvironment(
             stack: stack,
             placesSearchService: placesSearchService,
             geocodingService: geocodingService,
+            geofenceRegistryRepository: geofenceRegistryRepository,
+            notificationScheduler: notificationScheduler,
+            locationPermissionManager: locationPermissionManager,
+            networkMonitor: networkMonitor,
             isSharedInstance: true
         )
     }
@@ -38,8 +47,8 @@ final class AppEnvironment {
     // MARK: - Services
     let placesSearchService: PlacesSearchService
     let geocodingService: GeocodingService
-    let locationPermissionManager: DefaultLocationPermissionManager
-    let notificationScheduler: NotificationScheduler
+    let locationPermissionManager: LocationPermissionManager
+    let notificationScheduler: NotificationScheduling
     let geofenceCoordinator: GeofenceCoordinator
     let networkMonitor: NetworkMonitor
 
@@ -69,6 +78,10 @@ final class AppEnvironment {
         geocodingService: GeocodingService = UnavailableGeocodingService(
             reason: "Google Maps/Places APIキーが設定されていません。"
         ),
+        geofenceRegistryRepository: GeofenceRegistryRepository? = nil,
+        notificationScheduler: NotificationScheduling? = nil,
+        locationPermissionManager: LocationPermissionManager? = nil,
+        networkMonitor: NetworkMonitor? = nil,
         isSharedInstance: Bool = false
     ) {
         coreDataStack = stack
@@ -78,13 +91,13 @@ final class AppEnvironment {
         let linkRepo = CoreDataItemPlaceLinkRepository(stack: stack)
         let notifyRepo = CoreDataNotificationStateRepository(stack: stack)
         // CoreLocation ベースのジオフェンス登録を利用。
-        let geofenceRepo = CoreLocationGeofenceRegistryRepository()
+        var geofenceRepo: GeofenceRegistryRepository = geofenceRegistryRepository ?? Self.defaultGeofenceRepository()
 
         shoppingListRepository = shoppingRepo
         placesRepository = placeRepo
         linkRepository = linkRepo
         notificationRepository = notifyRepo
-        geofenceRegistryRepository = geofenceRepo
+        self.geofenceRegistryRepository = geofenceRepo
 
         self.placesSearchService = placesSearchService
         self.geocodingService = geocodingService
@@ -106,11 +119,12 @@ final class AppEnvironment {
         buildGeofenceSyncPlanUseCase = BuildGeofenceSyncPlanUseCase(registryRepository: geofenceRepo)
         shouldSendNotificationUseCase = ShouldSendNotificationUseCase()
 
-        networkMonitor = NetworkMonitor()
-        networkMonitor.start()
+        self.networkMonitor = networkMonitor ?? NetworkMonitor()
+        self.networkMonitor.start()
 
-        locationPermissionManager = DefaultLocationPermissionManager()
-        notificationScheduler = NotificationScheduler()
+        self.locationPermissionManager = locationPermissionManager ?? Self.defaultLocationPermissionManager()
+        let resolvedScheduler: NotificationScheduling = notificationScheduler ?? Self.defaultNotificationScheduler()
+        self.notificationScheduler = resolvedScheduler
         geofenceCoordinator = GeofenceCoordinator(
             placesRepository: placeRepo,
             loadAllPlacesUseCase: loadAllPlacesUseCase,
@@ -119,7 +133,7 @@ final class AppEnvironment {
             shouldSendNotificationUseCase: shouldSendNotificationUseCase,
             buildGeofenceSyncPlanUseCase: buildGeofenceSyncPlanUseCase,
             geofenceRepository: geofenceRepo,
-            notificationScheduler: notificationScheduler
+            notificationScheduler: resolvedScheduler
         )
         geofenceRepo.onRegionEntered = { [weak geofenceCoordinator] placeId in
             guard let coordinator = geofenceCoordinator else { return }
@@ -128,12 +142,36 @@ final class AppEnvironment {
     }
 }
 
+private extension AppEnvironment {
+    static func defaultGeofenceRepository() -> GeofenceRegistryRepository {
+        if LaunchArguments.isRunningTests {
+            return NoopGeofenceRegistryRepository()
+        }
+        return CoreLocationGeofenceRegistryRepository()
+    }
+
+    static func defaultNotificationScheduler() -> NotificationScheduling {
+        if LaunchArguments.isRunningTests {
+            return NoopNotificationScheduler()
+        }
+        return NotificationScheduler()
+    }
+
+    static func defaultLocationPermissionManager() -> LocationPermissionManager {
+        if LaunchArguments.isRunningTests {
+            return NoopLocationPermissionManager()
+        }
+        return DefaultLocationPermissionManager()
+    }
+}
+
+@MainActor
 private struct AppEnvironmentKey: EnvironmentKey {
     static var defaultValue: AppEnvironment { AppEnvironment.shared }
 }
 
 extension EnvironmentValues {
-    var appEnvironment: AppEnvironment {
+    @MainActor var appEnvironment: AppEnvironment {
         get { self[AppEnvironmentKey.self] }
         set { self[AppEnvironmentKey.self] = newValue }
     }

@@ -67,6 +67,7 @@ struct PlaceManagementView: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(place.name)
                     .font(.headline)
+                    .accessibilityIdentifier(UITestIdentifiers.PlaceManagement.rowPrefix + place.name)
                 if place.isActive {
                     activeBadge
                 }
@@ -79,6 +80,7 @@ struct PlaceManagementView: View {
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel("\(place.name)を削除")
+                .accessibilityIdentifier(UITestIdentifiers.PlaceManagement.deleteButtonPrefix + place.name)
             }
 
             if let address = place.address, address.isEmpty == false {
@@ -97,6 +99,7 @@ struct PlaceManagementView: View {
         .onTapGesture {
             viewModel.beginRenaming(place: place)
         }
+        .accessibilityIdentifier(UITestIdentifiers.PlaceManagement.rowPrefix + place.name)
     }
     
     private var deleteAlertBinding: Binding<Bool> {
@@ -134,6 +137,7 @@ private struct RenamePlaceSheet: View {
             Form {
                 Section(header: Text(place.name)) {
                     TextField("新しい名称", text: $newName)
+                        .accessibilityIdentifier(UITestIdentifiers.PlaceManagement.renameTextField)
                 }
             }
             .navigationTitle("名称変更")

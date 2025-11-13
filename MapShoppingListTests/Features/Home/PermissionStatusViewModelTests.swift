@@ -1,11 +1,13 @@
-import XCTest
+import Testing
 import CoreLocation
 import UserNotifications
 @testable import MapShoppingList
 
+@Suite("PermissionStatusViewModelTests")
 @MainActor
-final class PermissionStatusViewModelTests: XCTestCase {
-    func testRefreshStatusesUpdatesPublishedValues() async {
+struct PermissionStatusViewModelTests {
+    @Test("refreshStatuses updates published values")
+    func refreshStatusesUpdatesPublishedValues() async {
         let location = StubLocationPermissionManager(status: .authorizedWhenInUse, requested: .authorizedAlways)
         let notification = StubNotificationScheduler(status: .denied, requested: .authorized)
         let settings = StubSettingsOpener()
@@ -17,11 +19,12 @@ final class PermissionStatusViewModelTests: XCTestCase {
 
         await viewModel.refreshStatuses()
 
-        XCTAssertEqual(viewModel.locationStatus, .authorizedWhenInUse)
-        XCTAssertEqual(viewModel.notificationStatus, .denied)
+        #expect(viewModel.locationStatus == .authorizedWhenInUse)
+        #expect(viewModel.notificationStatus == .denied)
     }
 
-    func testNeedsLocationPromptIsFalseWhenAuthorizedAlways() async {
+    @Test("needs prompt toggles based on authorization")
+    func needsLocationPromptIsFalseWhenAuthorizedAlways() async {
         let location = StubLocationPermissionManager(status: .authorizedAlways, requested: .authorizedAlways)
         let notification = StubNotificationScheduler(status: .authorized, requested: .authorized)
         let settings = StubSettingsOpener()
@@ -33,11 +36,12 @@ final class PermissionStatusViewModelTests: XCTestCase {
 
         await viewModel.refreshStatuses()
 
-        XCTAssertFalse(viewModel.needsLocationPrompt)
-        XCTAssertFalse(viewModel.needsNotificationPrompt)
+        #expect(viewModel.needsLocationPrompt == false)
+        #expect(viewModel.needsNotificationPrompt == false)
     }
 
-    func testOpenSettingsInvokesOpener() {
+    @Test("openSettings invokes opener")
+    func openSettingsInvokesOpener() {
         let location = StubLocationPermissionManager(status: .denied, requested: .denied)
         let notification = StubNotificationScheduler(status: .denied, requested: .denied)
         let settings = StubSettingsOpener()
@@ -49,7 +53,7 @@ final class PermissionStatusViewModelTests: XCTestCase {
 
         viewModel.openSettings()
 
-        XCTAssertEqual(settings.openCount, 1)
+        #expect(settings.openCount == 1)
     }
 }
 

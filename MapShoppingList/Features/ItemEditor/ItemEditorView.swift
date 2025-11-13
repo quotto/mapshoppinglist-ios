@@ -36,6 +36,7 @@ struct ItemEditorView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .buttonStyle(.borderless)
+                        .accessibilityIdentifier(UITestIdentifiers.ItemEditor.recentPlacesButton)
                     }
 
                     let selectedPlaces = viewModel.selectedPlaces()
@@ -132,5 +133,6 @@ private struct SelectedPlaceRow: View {
             }
             .buttonStyle(.borderless)
         }
+        .accessibilityIdentifier(UITestIdentifiers.ItemEditor.selectedPlacePrefix + place.name)
     }
 }

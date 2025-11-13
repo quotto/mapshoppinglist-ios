@@ -48,6 +48,7 @@ struct RecentPlacesPickerView: View {
                             }
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier(UITestIdentifiers.RecentPlaces.rowPrefix + row.title)
                     }
                     .listStyle(.insetGrouped)
                 }
@@ -63,6 +64,7 @@ struct RecentPlacesPickerView: View {
                         dismiss()
                     }
                     .disabled(viewModel.selectedIds.isEmpty)
+                    .accessibilityIdentifier(UITestIdentifiers.RecentPlaces.addButton)
                 }
             }
             .task { await viewModel.load() }

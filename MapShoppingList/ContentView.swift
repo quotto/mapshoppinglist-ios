@@ -104,7 +104,8 @@ struct ContentView: View {
                 }
             }
             .task {
-                if LaunchArguments.isUITesting == false {
+                let shouldHandlePermissions = LaunchArguments.isUITesting == false && LaunchArguments.isRunningTests == false
+                if shouldHandlePermissions {
                     await permissionViewModel.refreshStatuses()
                     await permissionViewModel.requestLocationAuthorization()
                     await environment.geofenceCoordinator.syncActiveGeofences()
@@ -112,7 +113,7 @@ struct ContentView: View {
                 await viewModel.load()
             }
             .onReceive(NotificationCenter.default.publisher(for: .geofenceNeedsSync)) { _ in
-                guard LaunchArguments.isUITesting == false else { return }
+                guard LaunchArguments.isUITesting == false, LaunchArguments.isRunningTests == false else { return }
                 Task { await environment.geofenceCoordinator.syncActiveGeofences() }
             }
             .alert("エラー", isPresented: Binding<Bool>(
@@ -174,6 +175,7 @@ private struct FloatingActionButton: View {
                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
         }
         .accessibilityLabel("アイテムを追加")
+        .accessibilityIdentifier(UITestIdentifiers.Home.fabAddItem)
     }
 }
 
@@ -224,10 +226,11 @@ private struct SlidingSidebarMenuView: View {
                     
                     // メニュー項目
                     VStack(alignment: .leading, spacing: 0) {
-                        MenuItemButton(
-                            icon: "mappin.and.ellipse",
-                            title: "地点管理"
-                        ) {
+                MenuItemButton(
+                    icon: "mappin.and.ellipse",
+                    title: "地点管理",
+                    identifier: UITestIdentifiers.Menu.placeManagement
+                ) {
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 isPresented = false
                             }
@@ -238,10 +241,11 @@ private struct SlidingSidebarMenuView: View {
                         
                         Divider().padding(.leading, 56)
                         
-                        MenuItemButton(
-                            icon: "lock.doc",
-                            title: "プライバシーポリシー"
-                        ) {
+                MenuItemButton(
+                    icon: "lock.doc",
+                    title: "プライバシーポリシー",
+                    identifier: UITestIdentifiers.Menu.privacyPolicy
+                ) {
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 isPresented = false
                             }
@@ -252,10 +256,11 @@ private struct SlidingSidebarMenuView: View {
                         
                         Divider().padding(.leading, 56)
                         
-                        MenuItemButton(
-                            icon: "doc.text",
-                            title: "OSSライセンス"
-                        ) {
+                MenuItemButton(
+                    icon: "doc.text",
+                    title: "OSSライセンス",
+                    identifier: UITestIdentifiers.Menu.ossLicenses
+                ) {
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 isPresented = false
                             }
@@ -284,8 +289,9 @@ private struct SlidingSidebarMenuView: View {
 private struct MenuItemButton: View {
     let icon: String
     let title: String
+    let identifier: String?
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 16) {
@@ -302,6 +308,7 @@ private struct MenuItemButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(identifier ?? "")
     }
 }
 

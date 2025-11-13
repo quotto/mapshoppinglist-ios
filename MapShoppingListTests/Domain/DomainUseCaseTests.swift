@@ -1,23 +1,25 @@
-import XCTest
+import Testing
+import Foundation
 @testable import MapShoppingList
 
-final class DomainUseCaseTests: XCTestCase {
-    func testCreatePlaceDetectsDuplicate() async throws {
+@Suite("DomainUseCaseTests")
+struct DomainUseCaseTests {
+    @Test("CreatePlace detects duplicates")
+    func createPlaceDetectsDuplicate() async throws {
         let repo = InMemoryPlacesRepository()
         let place = Place(id: UUID(), name: "A店", latitudeE6: 100, longitudeE6: 200, note: nil, lastUsedAt: nil, isActive: true)
         try await repo.createPlace(place)
         let useCase = CreatePlaceUseCase(placesRepository: repo)
         let duplicate = Place(id: UUID(), name: "B店", latitudeE6: 100, longitudeE6: 200, note: nil, lastUsedAt: nil, isActive: false)
 
-        do {
+        let error = await #expect(throws: DomainError.self) {
             try await useCase.execute(place: duplicate)
-            XCTFail("例外が発生しませんでした")
-        } catch {
-            XCTAssertEqual(error as? DomainError, .duplicatePlace)
         }
+        #expect(error == .duplicatePlace)
     }
 
-    func testCreatePlaceRespectsLimit() async throws {
+    @Test("CreatePlace enforces limit")
+    func createPlaceRespectsLimit() async throws {
         let repo = InMemoryPlacesRepository()
         for _ in 0..<DomainConstants.placeLimit {
             let id = UUID()
@@ -27,19 +29,22 @@ final class DomainUseCaseTests: XCTestCase {
         let useCase = CreatePlaceUseCase(placesRepository: repo)
         let newPlace = Place(id: UUID(), name: "上限超え", latitudeE6: 9999, longitudeE6: 9999, note: nil, lastUsedAt: nil, isActive: false)
 
-        do {
+        let error = await #expect(throws: DomainError.self) {
             try await useCase.execute(place: newPlace)
-            XCTFail("例外が発生しませんでした")
-        } catch {
-            guard case let DomainError.placeLimitExceeded(max)? = error as? DomainError else {
-                XCTFail("想定外のエラー")
-                return
-            }
-            XCTAssertEqual(max, DomainConstants.placeLimit)
         }
+        guard let error else {
+            Issue.record("想定外のエラー: nil")
+            return
+        }
+        guard case let .placeLimitExceeded(max) = error else {
+            Issue.record("想定外のエラー: \(error)")
+            return
+        }
+        #expect(max == DomainConstants.placeLimit)
     }
 
-    func testAddAndUpdateItemSyncsLinks() async throws {
+    @Test("Add/Update item syncs links")
+    func addAndUpdateItemSyncsLinks() async throws {
         let itemRepo = InMemoryShoppingListRepository()
         let linkRepo = InMemoryItemPlaceLinkRepository()
         let addUseCase = AddShoppingItemUseCase(itemRepository: itemRepo, linkRepository: linkRepo)
@@ -51,7 +56,7 @@ final class DomainUseCaseTests: XCTestCase {
         let placeA = UUID()
         try await addUseCase.execute(item: item, placeIds: [placeA])
         let linkedAfterCreate = try await linkRepo.fetchPlaceIds(forItem: itemId)
-        XCTAssertEqual(linkedAfterCreate, [placeA])
+        #expect(linkedAfterCreate == [placeA])
 
         let placeB = UUID()
         var updatedItem = item
@@ -59,10 +64,11 @@ final class DomainUseCaseTests: XCTestCase {
         updatedItem.placeIds = [placeA, placeB]
         try await updateUseCase.execute(item: updatedItem, updatedPlaceIds: [placeA, placeB])
         let linkedAfterUpdate = try await linkRepo.fetchPlaceIds(forItem: itemId)
-        XCTAssertEqual(linkedAfterUpdate, [placeA, placeB])
+        #expect(linkedAfterUpdate == [placeA, placeB])
     }
 
-    func testBuildGeofenceSyncPlanRespectsLimit() async throws {
+    @Test("BuildGeofenceSyncPlan respects monitor limit")
+    func buildGeofenceSyncPlanRespectsLimit() async throws {
         let registry = InMemoryGeofenceRegistryRepository()
         let useCase = BuildGeofenceSyncPlanUseCase(registryRepository: registry)
         let now = Date()
@@ -79,25 +85,27 @@ final class DomainUseCaseTests: XCTestCase {
         }
 
         let plan = try await useCase.execute(activePlaces: places)
-        XCTAssertEqual(plan.toRegister.count, DomainConstants.geofenceMonitorLimit)
-        XCTAssertEqual(plan.toUnregister.count, 0)
+        #expect(plan.toRegister.count == DomainConstants.geofenceMonitorLimit)
+        #expect(plan.toUnregister.isEmpty)
 
         try await registry.registerGeofences(plan.toRegister)
         let secondPlan = try await useCase.execute(activePlaces: Array(places.prefix(10)))
-        XCTAssertEqual(secondPlan.toRegister.count, 0)
-        XCTAssertEqual(secondPlan.toUnregister.count, DomainConstants.geofenceMonitorLimit - 10)
+        #expect(secondPlan.toRegister.isEmpty)
+        #expect(secondPlan.toUnregister.count == DomainConstants.geofenceMonitorLimit - 10)
     }
 
-    func testShouldSendNotificationAlwaysTrue() throws {
+    @Test("ShouldSendNotification returns true")
+    func shouldSendNotificationAlwaysTrue() throws {
         let useCase = ShouldSendNotificationUseCase()
         let now = Date()
 
         let state = NotificationState(placeId: UUID(), lastNotifiedAt: now)
-        XCTAssertTrue(try useCase.execute(state: state, now: now))
-        XCTAssertTrue(try useCase.execute(state: nil, now: now))
+        #expect(try useCase.execute(state: state, now: now))
+        #expect(try useCase.execute(state: nil, now: now))
     }
 
-    func testMarkPlaceItemsPurchased() async throws {
+    @Test("MarkPlaceItemsPurchased updates repository")
+    func markPlaceItemsPurchased() async throws {
         let itemRepo = InMemoryShoppingListRepository()
         let placeRepo = InMemoryPlacesRepository()
         let placeId = UUID()
@@ -113,6 +121,6 @@ final class DomainUseCaseTests: XCTestCase {
         try await useCase.execute(placeId: placeId)
 
         let updated = try await itemRepo.fetchItem(id: itemId)
-        XCTAssertEqual(updated?.isPurchased, true)
+        #expect(updated?.isPurchased == true)
     }
 }

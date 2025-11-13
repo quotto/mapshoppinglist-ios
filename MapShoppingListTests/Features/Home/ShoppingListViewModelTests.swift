@@ -1,9 +1,12 @@
-import XCTest
+import Testing
+import Foundation
 @testable import MapShoppingList
 
+@Suite("ShoppingListViewModelTests")
 @MainActor
-final class ShoppingListViewModelTests: XCTestCase {
-    func testLoadSortsPendingAndPurchased() async throws {
+struct ShoppingListViewModelTests {
+    @Test("load sorts pending and purchased")
+    func loadSortsPendingAndPurchased() async throws {
         let itemRepo = InMemoryShoppingListRepository()
         let linkRepo = InMemoryItemPlaceLinkRepository()
         let now = Date()
@@ -19,11 +22,12 @@ final class ShoppingListViewModelTests: XCTestCase {
         )
 
         await viewModel.load()
-        XCTAssertEqual(viewModel.pendingItems.map { $0.title }, ["牛乳"])
-        XCTAssertEqual(viewModel.purchasedItems.map { $0.title }, ["パン"])
+        #expect(viewModel.pendingItems.map(\.title) == ["牛乳"])
+        #expect(viewModel.purchasedItems.map(\.title) == ["パン"])
     }
 
-    func testToggleUpdatesPurchasedState() async throws {
+    @Test("toggle updates purchased state")
+    func toggleUpdatesPurchasedState() async throws {
         let itemRepo = InMemoryShoppingListRepository()
         let linkRepo = InMemoryItemPlaceLinkRepository()
         let now = Date()
@@ -37,11 +41,9 @@ final class ShoppingListViewModelTests: XCTestCase {
         )
 
         await viewModel.load()
-        guard let first = viewModel.pendingItems.first else {
-            return XCTFail("アイテムが読み込まれていません")
-        }
+        let first = try #require(viewModel.pendingItems.first, "pending item not loaded")
         await viewModel.togglePurchased(item: first)
         let updated = try await itemRepo.fetchItem(id: item.id)
-        XCTAssertEqual(updated?.isPurchased, true)
+        #expect(updated?.isPurchased == true)
     }
 }

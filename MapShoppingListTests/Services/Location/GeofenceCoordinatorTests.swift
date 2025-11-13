@@ -1,9 +1,13 @@
-import XCTest
+import Testing
+import Foundation
+import UserNotifications
 @testable import MapShoppingList
 
+@Suite("GeofenceCoordinatorTests")
 @MainActor
-final class GeofenceCoordinatorTests: XCTestCase {
-    func testSyncRegistersAndUnregisters() async throws {
+struct GeofenceCoordinatorTests {
+    @Test("sync registers/unregisters active geofences")
+    func syncRegistersAndUnregisters() async {
         let geofenceRepo = StubGeofenceRepository()
         let placesRepo = StubPlacesRepository()
         let itemsRepo = StubShoppingListRepository()
@@ -27,13 +31,14 @@ final class GeofenceCoordinatorTests: XCTestCase {
         let initialIds = geofenceRepo.current.map { $0.id }
         await coordinator.syncActiveGeofences()
 
-        XCTAssertEqual(geofenceRepo.registered.count, 1)
-        XCTAssertEqual(geofenceRepo.registered.first?.placeId, placeA.id)
-        XCTAssertEqual(geofenceRepo.unregistered.count, 1)
-        XCTAssertTrue(initialIds.contains(where: { $0 == geofenceRepo.unregistered.first?.id }))
+        #expect(geofenceRepo.registered.count == 1)
+        #expect(geofenceRepo.registered.first?.placeId == placeA.id)
+        #expect(geofenceRepo.unregistered.count == 1)
+        #expect(initialIds.contains(where: { $0 == geofenceRepo.unregistered.first?.id }))
     }
 
-    func testHandleRegionEntrySchedulesNotification() async throws {
+    @Test("handle region entry schedules notification")
+    func handleRegionEntrySchedulesNotification() async throws {
         let geofenceRepo = StubGeofenceRepository()
         let placesRepo = StubPlacesRepository()
         let itemsRepo = StubShoppingListRepository()
@@ -60,11 +65,10 @@ final class GeofenceCoordinatorTests: XCTestCase {
 
         await coordinator.handleRegionEntry(placeId: placeId)
 
-        XCTAssertEqual(scheduler.scheduledPlaceId, placeId)
+        #expect(scheduler.scheduledPlaceId == placeId)
         let savedState = try await notificationRepo.fetchState(forPlace: placeId)
-        XCTAssertNotNil(savedState?.lastNotifiedAt)
+        #expect(savedState?.lastNotifiedAt != nil)
     }
-
 }
 
 // MARK: - Stubs
@@ -134,28 +138,17 @@ private final class StubNotificationStateRepository: NotificationStateRepository
 }
 
 @MainActor
-private final class StubNotificationScheduler: NotificationScheduler {
+private final class StubNotificationScheduler: NotificationScheduling {
     var scheduledPlaceId: UUID?
 
-    @MainActor
-    init() {
-        super.init(center: StubNotificationCenter())
-    }
+    func authorizationStatus() async -> UNAuthorizationStatus { .authorized }
 
-    @MainActor
-    override init(center: NotificationCentering) {
-        super.init(center: center)
-    }
+    @discardableResult
+    func requestAuthorization() async -> UNAuthorizationStatus { .authorized }
 
-    override func schedule(place: Place, items: [ShoppingItem]) async {
+    func requestAuthorizationIfNeeded() async {}
+
+    func schedule(place: Place, items: [ShoppingItem]) async {
         scheduledPlaceId = place.id
     }
-}
-
-@MainActor
-private final class StubNotificationCenter: NotificationCentering {
-    func authorizationStatus() async -> UNAuthorizationStatus { .authorized }
-    func requestAuthorization(options: UNAuthorizationOptions) async -> Bool { true }
-    func removePendingRequests(withIdentifiers identifiers: [String]) {}
-    func add(_ request: UNNotificationRequest) async throws {}
 }

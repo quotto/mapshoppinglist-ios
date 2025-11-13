@@ -1,9 +1,12 @@
-import XCTest
+import Testing
+import Foundation
 @testable import MapShoppingList
 
+@Suite("ItemEditorViewModelTests")
 @MainActor
-final class ItemEditorViewModelTests: XCTestCase {
-    func testCreateItemSavesWithSelectedPlaces() async throws {
+struct ItemEditorViewModelTests {
+    @Test("create item saves selected places")
+    func createItemSavesWithSelectedPlaces() async throws {
         let itemRepo = InMemoryShoppingListRepository()
         let placeRepo = InMemoryPlacesRepository()
         let linkRepo = InMemoryItemPlaceLinkRepository()
@@ -24,9 +27,9 @@ final class ItemEditorViewModelTests: XCTestCase {
         viewModel.title = "牛乳"
         viewModel.togglePlace(place)
         let success = await viewModel.save()
-        XCTAssertTrue(success)
+        #expect(success)
         let items = try await itemRepo.fetchItems()
-        XCTAssertEqual(items.count, 1)
-        XCTAssertEqual(items.first?.placeIds, [placeId])
+        #expect(items.count == 1)
+        #expect(items.first?.placeIds == [placeId])
     }
 }

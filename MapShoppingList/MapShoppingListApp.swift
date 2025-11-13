@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 @main
 struct MapShoppingListApp: App {
@@ -15,12 +16,10 @@ struct MapShoppingListApp: App {
 
     init() {
         if LaunchArguments.isUITesting {
-            AppEnvironment.configureShared(
-                stack: CoreDataStack.makeInMemory(),
-                placesSearchService: UnavailablePlacesSearchService(reason: "UITests"),
-                geocodingService: UnavailableGeocodingService(reason: "UITests")
-            )
-            environment = AppEnvironment.shared
+            environment = Self.makeTestEnvironment(reason: "UITests")
+            _configurationWarning = State(initialValue: nil)
+        } else if LaunchArguments.isUnitTesting {
+            environment = Self.makeTestEnvironment(reason: "UnitTests")
             _configurationWarning = State(initialValue: nil)
         } else {
             let result = MapServicesConfigurator.configure()
@@ -31,6 +30,27 @@ struct MapShoppingListApp: App {
             environment = AppEnvironment.shared
             _configurationWarning = State(initialValue: result.warningMessage)
         }
+    }
+
+    private static func makeTestEnvironment(reason: String) -> AppEnvironment {
+        let stack = CoreDataStack.makeInMemory()
+        let locationManager = NoopLocationPermissionManager(
+            status: LaunchArguments.locationAuthorizationOverride ?? .authorizedAlways
+        )
+        let notificationScheduler = NoopNotificationScheduler(
+            status: LaunchArguments.notificationAuthorizationOverride ?? .authorized
+        )
+        AppEnvironment.configureShared(
+            stack: stack,
+            placesSearchService: UnavailablePlacesSearchService(reason: reason),
+            geocodingService: UnavailableGeocodingService(reason: reason),
+            geofenceRegistryRepository: NoopGeofenceRegistryRepository(),
+            notificationScheduler: notificationScheduler,
+            locationPermissionManager: locationManager
+        )
+        let environment = AppEnvironment.shared
+        UITestScenarioSeeder.seedIfNeeded(environment: environment)
+        return environment
     }
 
     var body: some Scene {

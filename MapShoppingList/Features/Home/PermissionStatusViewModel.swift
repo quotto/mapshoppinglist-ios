@@ -22,11 +22,19 @@ final class PermissionStatusViewModel: ObservableObject {
         self.locationManager = locationManager
         self.notificationScheduler = notificationScheduler
         self.settingsOpener = settingsOpener
-        if LaunchArguments.isUITesting {
+        if let override = LaunchArguments.locationAuthorizationOverride {
+            locationStatus = override
+        } else if LaunchArguments.isUITesting {
             locationStatus = .authorizedAlways
-            notificationStatus = .authorized
         } else {
             locationStatus = locationManager.authorizationStatus()
+        }
+
+        if let notificationOverride = LaunchArguments.notificationAuthorizationOverride {
+            notificationStatus = notificationOverride
+        } else if LaunchArguments.isUITesting {
+            notificationStatus = .authorized
+        } else {
             notificationStatus = .authorized
         }
     }
@@ -40,20 +48,34 @@ final class PermissionStatusViewModel: ObservableObject {
     }
 
     func refreshStatuses() async {
-        guard LaunchArguments.isUITesting == false else { return }
-        locationStatus = locationManager.authorizationStatus()
-        notificationStatus = await notificationScheduler.authorizationStatus()
+        if let override = LaunchArguments.locationAuthorizationOverride {
+            locationStatus = override
+        } else {
+            locationStatus = locationManager.authorizationStatus()
+        }
+
+        if let override = LaunchArguments.notificationAuthorizationOverride {
+            notificationStatus = override
+        } else {
+            notificationStatus = await notificationScheduler.authorizationStatus()
+        }
     }
 
     func requestLocationAuthorization() async {
-        guard LaunchArguments.isUITesting == false else { return }
+        if let override = LaunchArguments.locationAuthorizationOverride {
+            locationStatus = override
+            return
+        }
         isRequestingLocation = true
         locationStatus = await locationManager.requestAuthorization()
         isRequestingLocation = false
     }
 
     func requestNotificationAuthorization() async {
-        guard LaunchArguments.isUITesting == false else { return }
+        if let override = LaunchArguments.notificationAuthorizationOverride {
+            notificationStatus = override
+            return
+        }
         isRequestingNotification = true
         notificationStatus = await notificationScheduler.requestAuthorization()
         isRequestingNotification = false

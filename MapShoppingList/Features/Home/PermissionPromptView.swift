@@ -8,6 +8,7 @@ struct PermissionPromptSection: View {
         VStack(alignment: .center, spacing: 12) {
             if viewModel.needsLocationPrompt {
                 PermissionPromptCard(
+                    identifier: UITestIdentifiers.PermissionPrompt.locationCard,
                     icon: "location.circle",
                     title: "位置情報の許可設定",
                     message: viewModel.locationMessage,
@@ -23,6 +24,7 @@ struct PermissionPromptSection: View {
 
             if viewModel.needsNotificationPrompt {
                 PermissionPromptCard(
+                    identifier: UITestIdentifiers.PermissionPrompt.notificationCard,
                     icon: "bell.circle",
                     title: "通知の許可設定",
                     message: viewModel.notificationMessage,
@@ -66,6 +68,7 @@ struct PermissionPromptSection: View {
 }
 
 private struct PermissionPromptCard: View {
+    let identifier: String?
     let icon: String
     let title: String
     let message: String
@@ -111,5 +114,18 @@ private struct PermissionPromptCard: View {
         }
         .padding(16)
         .background(Color.appSecondaryContainer.opacity(0.5), in: RoundedRectangle(cornerRadius: 16))
+        .modifier(AccessibilityIdentifierModifier(identifier: identifier))
+    }
+}
+
+private struct AccessibilityIdentifierModifier: ViewModifier {
+    let identifier: String?
+
+    func body(content: Content) -> some View {
+        if let identifier {
+            content.accessibilityIdentifier(identifier)
+        } else {
+            content
+        }
     }
 }
