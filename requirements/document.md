@@ -1,7 +1,5 @@
 # 買い忘れ防止リスト（Android）基本設計書（MVP / v1.2）
 
-最終更新: 2025-09-27（Asia/Tokyo）
-
 ---
 
 ## 1. 目的・スコープ
@@ -350,9 +348,8 @@ flowchart LR
 
 ## 11. CI/CD 運用方針
 
-- **基盤**: GitHub Actions（iOS 版優先で構築。Android 版ワークフローは参考情報として別途管理）。
-
-### 11.1 iOS（本プロジェクト）
+### 11.1 概要
+- **基盤**: XCodeCloud
 
 - **ワークフロー**: `.github/workflows/ios-ci.yml`
     - `push`（`main` / `feature/**`）および `pull_request`（base=`main`）で起動。
@@ -363,6 +360,9 @@ flowchart LR
     - CI では `GOOGLE_MAPS_API_KEY`（ダミー値）を渡し、Places 検索機能が未設定警告を出さないようにする。実運用時はリポジトリ Secrets 側で実キーを設定し、ジョブの環境変数に上書きする。
 - **成果物/レポート**: 現時点では生成なし。将来的に `xcresult` のアーカイブが必要になった場合は `actions/upload-artifact` を追加する。
 
-### 11.2 Android（参考・先行プロジェクト）
+### 11.2 ビルド時の秘密情報の扱い
 
-- GitHub Actions 上で Gradle ビルド／テスト／配信を行う構成。詳細は Android プロジェクトの `android-*.yml` を参照。
+- Google Maps / Places の API キーはバンドル内の `AppSecrets.json` から読み込む。
+- `Scripts/generate-secrets-json.sh` がビルド毎に `${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AppSecrets.json` を生成する。
+- 上記のスクリプトで環境変数を読み込むため、ビルド実行環境ではあらかじめ`Config.secret.xcconfig`を設定しておく必要がある。
+- API キーが未設定の場合は空の JSON が生成され、アプリ起動時に警告アラートを表示する。
