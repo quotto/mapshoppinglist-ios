@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import CoreLocation
 
 /// アプリ全体で利用する依存関係を束ねるコンテナ。
 @MainActor
@@ -22,6 +23,7 @@ final class AppEnvironment {
         geofenceRegistryRepository: GeofenceRegistryRepository? = nil,
         notificationScheduler: NotificationScheduling? = nil,
         locationPermissionManager: LocationPermissionManager? = nil,
+        currentLocationProvider: CurrentLocationProviding? = nil,
         networkMonitor: NetworkMonitor? = nil
     ) {
         sharedInstance = AppEnvironment(
@@ -31,6 +33,7 @@ final class AppEnvironment {
             geofenceRegistryRepository: geofenceRegistryRepository,
             notificationScheduler: notificationScheduler,
             locationPermissionManager: locationPermissionManager,
+            currentLocationProvider: currentLocationProvider,
             networkMonitor: networkMonitor,
             isSharedInstance: true
         )
@@ -48,6 +51,7 @@ final class AppEnvironment {
     let placesSearchService: PlacesSearchService
     let geocodingService: GeocodingService
     let locationPermissionManager: LocationPermissionManager
+    let currentLocationProvider: CurrentLocationProviding
     let notificationScheduler: NotificationScheduling
     let geofenceCoordinator: GeofenceCoordinator
     let networkMonitor: NetworkMonitor
@@ -81,6 +85,7 @@ final class AppEnvironment {
         geofenceRegistryRepository: GeofenceRegistryRepository? = nil,
         notificationScheduler: NotificationScheduling? = nil,
         locationPermissionManager: LocationPermissionManager? = nil,
+        currentLocationProvider: CurrentLocationProviding? = nil,
         networkMonitor: NetworkMonitor? = nil,
         isSharedInstance: Bool = false
     ) {
@@ -123,6 +128,7 @@ final class AppEnvironment {
         self.networkMonitor.start()
 
         self.locationPermissionManager = locationPermissionManager ?? Self.defaultLocationPermissionManager()
+        self.currentLocationProvider = currentLocationProvider ?? Self.defaultCurrentLocationProvider()
         let resolvedScheduler: NotificationScheduling = notificationScheduler ?? Self.defaultNotificationScheduler()
         self.notificationScheduler = resolvedScheduler
         geofenceCoordinator = GeofenceCoordinator(
@@ -162,6 +168,15 @@ private extension AppEnvironment {
             return NoopLocationPermissionManager()
         }
         return DefaultLocationPermissionManager()
+    }
+
+    static func defaultCurrentLocationProvider() -> CurrentLocationProviding {
+        if LaunchArguments.isRunningTests {
+            return FixedCurrentLocationProvider(
+                coordinate: CLLocationCoordinate2D(latitude: 35.6813, longitude: 139.767066)
+            )
+        }
+        return DefaultCurrentLocationProvider()
     }
 }
 

@@ -33,7 +33,16 @@ struct PlaceSearchViewModelTests {
         let useCase = CreatePlaceUseCase(placesRepository: repository)
         let geocoder = StubGeocodingService()
         let network = StubNetworkMonitor(isConnected: true)
-        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder, networkProvider: network)
+        let permission = StubLocationPermissionManager(status: .authorizedAlways)
+        let locationProvider = StubCurrentLocationProvider(result: .failure(StubLocationError.noLocation))
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
 
         viewModel.query = "テスト"
         await viewModel.performSearch()
@@ -66,7 +75,16 @@ struct PlaceSearchViewModelTests {
         let useCase = CreatePlaceUseCase(placesRepository: repository)
         let geocoder = StubGeocodingService()
         let network = StubNetworkMonitor(isConnected: true)
-        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder, networkProvider: network)
+        let permission = StubLocationPermissionManager(status: .authorizedAlways)
+        let locationProvider = StubCurrentLocationProvider(result: .failure(StubLocationError.noLocation))
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
 
         viewModel.query = "テスト"
         await viewModel.performSearch()
@@ -87,7 +105,16 @@ struct PlaceSearchViewModelTests {
         let geocoder = StubGeocodingService()
         geocoder.result = .success(GeocodeResult(primaryText: "手動登録", secondaryText: "東京都千代田区"))
         let network = StubNetworkMonitor(isConnected: true)
-        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder, networkProvider: network)
+        let permission = StubLocationPermissionManager(status: .authorizedAlways)
+        let locationProvider = StubCurrentLocationProvider(result: .failure(StubLocationError.noLocation))
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
 
         let coordinate = CLLocationCoordinate2D(latitude: 35.0, longitude: 139.0)
         viewModel.updateCoordinateFromMap(coordinate)
@@ -117,7 +144,16 @@ struct PlaceSearchViewModelTests {
         let useCase = CreatePlaceUseCase(placesRepository: repository)
         let geocoder = StubGeocodingService()
         let network = StubNetworkMonitor(isConnected: true)
-        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder, networkProvider: network)
+        let permission = StubLocationPermissionManager(status: .authorizedAlways)
+        let locationProvider = StubCurrentLocationProvider(result: .failure(StubLocationError.noLocation))
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
 
         viewModel.query = "テスト"
         await viewModel.performSearch()
@@ -151,7 +187,16 @@ struct PlaceSearchViewModelTests {
         let useCase = CreatePlaceUseCase(placesRepository: repository)
         let geocoder = StubGeocodingService()
         let network = StubNetworkMonitor(isConnected: true)
-        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder, networkProvider: network)
+        let permission = StubLocationPermissionManager(status: .authorizedAlways)
+        let locationProvider = StubCurrentLocationProvider(result: .failure(StubLocationError.noLocation))
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
 
         viewModel.query = "テスト"
         await viewModel.performSearch()
@@ -172,7 +217,16 @@ struct PlaceSearchViewModelTests {
         let useCase = CreatePlaceUseCase(placesRepository: repository)
         let geocoder = StubGeocodingService()
         let network = StubNetworkMonitor(isConnected: false)
-        let viewModel = PlaceSearchViewModel(placesSearchService: stubService, createPlaceUseCase: useCase, geocodingService: geocoder, networkProvider: network)
+        let permission = StubLocationPermissionManager(status: .authorizedAlways)
+        let locationProvider = StubCurrentLocationProvider(result: .failure(StubLocationError.noLocation))
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
 
         viewModel.query = "テスト"
         await viewModel.performSearch()
@@ -180,6 +234,58 @@ struct PlaceSearchViewModelTests {
         #expect(viewModel.searchErrorMessage == "オフラインのため検索できません")
         #expect(viewModel.isSearchRetryable == false)
         #expect(stubService.receivedSessions.isEmpty)
+    }
+
+    @Test("initial camera uses current location when authorized")
+    func initialCameraUsesCurrentLocation() async {
+        let stubService = StubPlacesSearchService()
+        let repository = InMemoryPlacesRepository()
+        let useCase = CreatePlaceUseCase(placesRepository: repository)
+        let geocoder = StubGeocodingService()
+        let network = StubNetworkMonitor(isConnected: true)
+        let permission = StubLocationPermissionManager(status: .authorizedWhenInUse)
+        let locationProvider = StubCurrentLocationProvider(
+            result: .success(CLLocationCoordinate2D(latitude: 1.23, longitude: 4.56))
+        )
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
+
+        await viewModel.loadInitialCameraIfNeeded()
+
+        #expect(viewModel.initialCameraCoordinate?.latitude == 1.23)
+        #expect(viewModel.initialCameraCoordinate?.longitude == 4.56)
+    }
+
+    @Test("initial camera falls back when permission denied")
+    func initialCameraFallsBackWhenDenied() async {
+        let stubService = StubPlacesSearchService()
+        let repository = InMemoryPlacesRepository()
+        let useCase = CreatePlaceUseCase(placesRepository: repository)
+        let geocoder = StubGeocodingService()
+        let network = StubNetworkMonitor(isConnected: true)
+        let permission = StubLocationPermissionManager(status: .denied)
+        let locationProvider = StubCurrentLocationProvider(
+            result: .success(CLLocationCoordinate2D(latitude: 0.0, longitude: 0.0))
+        )
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
+
+        await viewModel.loadInitialCameraIfNeeded()
+
+        #expect(viewModel.initialCameraCoordinate?.latitude == 35.6813)
+        #expect(viewModel.initialCameraCoordinate?.longitude == 139.767066)
     }
 }
 
@@ -197,4 +303,34 @@ private final class StubNetworkMonitor: NetworkStatusProviding {
         self.isConnected = isConnected
         subject = CurrentValueSubject(isConnected)
     }
+}
+
+@MainActor
+private final class StubLocationPermissionManager: LocationPermissionManager {
+    private let status: CLAuthorizationStatus
+
+    init(status: CLAuthorizationStatus) {
+        self.status = status
+    }
+
+    func authorizationStatus() -> CLAuthorizationStatus { status }
+
+    func requestAuthorization() async -> CLAuthorizationStatus { status }
+}
+
+@MainActor
+private final class StubCurrentLocationProvider: CurrentLocationProviding {
+    var result: Result<CLLocationCoordinate2D, Error>
+
+    init(result: Result<CLLocationCoordinate2D, Error>) {
+        self.result = result
+    }
+
+    func currentLocation() async throws -> CLLocationCoordinate2D {
+        try result.get()
+    }
+}
+
+private enum StubLocationError: Error {
+    case noLocation
 }

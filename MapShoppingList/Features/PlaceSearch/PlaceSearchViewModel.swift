@@ -19,28 +19,37 @@ final class PlaceSearchViewModel: ObservableObject {
     @Published var geocodeErrorMessage: String?
     @Published var formErrorMessage: String?
     @Published var isOffline: Bool = false
+    @Published var initialCameraCoordinate: CLLocationCoordinate2D?
 
     private let placesSearchService: PlacesSearchService
     private let createPlaceUseCase: CreatePlaceUseCase
     private let geocodingService: GeocodingService
     private let networkProvider: NetworkStatusProviding
+    private let locationPermissionManager: LocationPermissionManager
+    private let locationProvider: CurrentLocationProviding
     private var cancellable: AnyCancellable?
     private var currentSession: PlacesAutocompleteSession?
     private var lastQuery: String?
+    private var didLoadInitialCamera = false
 
     private var selectedName: String?
     private var selectedAddress: String?
+    private static let fallbackCoordinate = CLLocationCoordinate2D(latitude: 35.6813, longitude: 139.767066)
 
     init(
         placesSearchService: PlacesSearchService,
         createPlaceUseCase: CreatePlaceUseCase,
         geocodingService: GeocodingService,
-        networkProvider: NetworkStatusProviding
+        networkProvider: NetworkStatusProviding,
+        locationPermissionManager: LocationPermissionManager,
+        locationProvider: CurrentLocationProviding
     ) {
         self.placesSearchService = placesSearchService
         self.createPlaceUseCase = createPlaceUseCase
         self.geocodingService = geocodingService
         self.networkProvider = networkProvider
+        self.locationPermissionManager = locationPermissionManager
+        self.locationProvider = locationProvider
         isOffline = networkProvider.isConnectedCurrent == false
         cancellable = networkProvider.isConnectedPublisher
             .receive(on: RunLoop.main)
@@ -54,7 +63,9 @@ final class PlaceSearchViewModel: ObservableObject {
             placesSearchService: environment.placesSearchService,
             createPlaceUseCase: environment.createPlaceUseCase,
             geocodingService: environment.geocodingService,
-            networkProvider: environment.networkMonitor
+            networkProvider: environment.networkMonitor,
+            locationPermissionManager: environment.locationPermissionManager,
+            locationProvider: environment.currentLocationProvider
         )
     }
 
@@ -225,6 +236,25 @@ final class PlaceSearchViewModel: ObservableObject {
         formErrorMessage = nil
     }
 
+    func loadInitialCameraIfNeeded() async {
+        guard didLoadInitialCamera == false else { return }
+        didLoadInitialCamera = true
+
+        let status = locationPermissionManager.authorizationStatus()
+        guard status.isAuthorizedForLocation else {
+            initialCameraCoordinate = Self.fallbackCoordinate
+            return
+        }
+
+        do {
+            let coordinate = try await locationProvider.currentLocation()
+            initialCameraCoordinate = coordinate
+        } catch {
+            // 現在地が取得できない場合は東京駅でフォールバックする
+            initialCameraCoordinate = Self.fallbackCoordinate
+        }
+    }
+
     private func apply(details: PlaceDetails) {
         selectedCoordinate = CLLocationCoordinate2D(latitude: details.latitude, longitude: details.longitude)
         selectedName = details.name.isEmpty ? details.formattedAddress : details.name
@@ -262,5 +292,16 @@ final class PlaceSearchViewModel: ObservableObject {
             geocodeErrorMessage = error.localizedDescription
         }
         isGeocoding = false
+    }
+}
+
+private extension CLAuthorizationStatus {
+    var isAuthorizedForLocation: Bool {
+        switch self {
+        case .authorizedAlways, .authorizedWhenInUse, .authorized:
+            return true
+        default:
+            return false
+        }
     }
 }

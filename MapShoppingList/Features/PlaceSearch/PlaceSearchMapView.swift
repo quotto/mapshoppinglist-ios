@@ -21,16 +21,18 @@ struct PlaceSearchMapView: UIViewRepresentable {
         }
     }
 
+    let initialCameraCoordinate: CLLocationCoordinate2D?
     let coordinate: CLLocationCoordinate2D?
     let onCoordinateSelected: (CLLocationCoordinate2D) -> Void
     let onPOITapped: (String, String, CLLocationCoordinate2D) -> Void
+    private let fallbackCoordinate = CLLocationCoordinate2D(latitude: 35.6813, longitude: 139.767066)
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
     }
 
     func makeUIView(context: Context) -> GMSMapView {
-        let initial = coordinate ?? CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671)
+        let initial = initialCameraCoordinate ?? coordinate ?? fallbackCoordinate
         let mapView = GMSMapView(frame: .zero, camera: GMSCameraPosition(latitude: initial.latitude, longitude: initial.longitude, zoom: 14))
         mapView.delegate = context.coordinator
         mapView.settings.myLocationButton = false
@@ -47,6 +49,8 @@ struct PlaceSearchMapView: UIViewRepresentable {
             updateMarker(on: mapView, coordinate: coord)
         } else {
             mapView.clear()
+            let initial = initialCameraCoordinate ?? fallbackCoordinate
+            mapView.animate(toLocation: initial)
         }
     }
 
