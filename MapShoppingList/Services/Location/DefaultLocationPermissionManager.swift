@@ -122,7 +122,7 @@ final class FixedCurrentLocationProvider: CurrentLocationProviding {
     func currentLocation() async throws -> CLLocationCoordinate2D { coordinate }
 }
 
-private extension CLAuthorizationStatus {
+extension CLAuthorizationStatus {
     var isAuthorized: Bool {
         switch self {
         case .authorizedAlways, .authorizedWhenInUse, .authorized:

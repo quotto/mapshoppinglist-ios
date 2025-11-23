@@ -34,7 +34,7 @@ final class PlaceSearchViewModel: ObservableObject {
 
     private var selectedName: String?
     private var selectedAddress: String?
-    private static let fallbackCoordinate = CLLocationCoordinate2D(latitude: 35.6813, longitude: 139.767066)
+    static let fallbackCoordinate = CLLocationCoordinate2D(latitude: 35.6813, longitude: 139.767066)
 
     init(
         placesSearchService: PlacesSearchService,
@@ -241,7 +241,7 @@ final class PlaceSearchViewModel: ObservableObject {
         didLoadInitialCamera = true
 
         let status = locationPermissionManager.authorizationStatus()
-        guard status.isAuthorizedForLocation else {
+        guard status.isAuthorized else {
             initialCameraCoordinate = Self.fallbackCoordinate
             return
         }
@@ -292,16 +292,5 @@ final class PlaceSearchViewModel: ObservableObject {
             geocodeErrorMessage = error.localizedDescription
         }
         isGeocoding = false
-    }
-}
-
-private extension CLAuthorizationStatus {
-    var isAuthorizedForLocation: Bool {
-        switch self {
-        case .authorizedAlways, .authorizedWhenInUse, .authorized:
-            return true
-        default:
-            return false
-        }
     }
 }

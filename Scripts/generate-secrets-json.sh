@@ -10,7 +10,6 @@ OUTPUT_DIR="$1"
 CONFIG_PATH="${OUTPUT_DIR}/AppSecrets.json"
 mkdir -p "$OUTPUT_DIR"
 
-echo "${GOOGLE_MAPS_API_KEY}"
 API_KEY="${GOOGLE_MAPS_API_KEY:-}"
 
 if [[ -z "$API_KEY" ]]; then
