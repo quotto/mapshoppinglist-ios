@@ -67,6 +67,7 @@ protocol CurrentLocationProviding: AnyObject {
 enum CurrentLocationError: Error {
     case unauthorized
     case busy
+    case noLocationData
 }
 
 /// 端末の現在地を1回だけ取得するためのプロバイダ。
@@ -99,7 +100,7 @@ final class DefaultCurrentLocationProvider: NSObject, CLLocationManagerDelegate,
         if let coordinate = locations.first?.coordinate {
             continuation.resume(returning: coordinate)
         } else {
-            continuation.resume(throwing: CurrentLocationError.unauthorized)
+            continuation.resume(throwing: CurrentLocationError.noLocationData)
         }
     }
 

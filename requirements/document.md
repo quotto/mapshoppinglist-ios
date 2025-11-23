@@ -370,5 +370,5 @@ flowchart LR
 
 - Google Maps / Places の API キーはバンドル内の `AppSecrets.json` から読み込む。
 - `Scripts/generate-secrets-json.sh` がビルド毎に `${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AppSecrets.json` を生成する。
-- 上記のスクリプトで環境変数を読み込むため、ビルド実行環境ではあらかじめ`Config.secret.xcconfig`を設定しておく必要がある。
+- 上記スクリプトは環境変数（例: `GOOGLE_MAPS_API_KEY`）を直接読み込む。CI では `ci_scripts/ci_post_clone.sh` がリポジトリルートに `Config.secret.xcconfig` を生成するため、ビルド前に当該ファイルを作成するか、環境変数を直接設定しておく。
 - API キーが未設定の場合は空の JSON が生成され、アプリ起動時に警告アラートを表示する。

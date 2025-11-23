@@ -20,11 +20,14 @@ if [[ -z "$API_KEY" ]]; then
 JSON
   echo "warning: GOOGLE_MAPS_API_KEY is not set. Generated empty AppSecrets.json" >&2
 else
-  cat > "$CONFIG_PATH" <<JSON
-{
-  "googleMaps": {
-    "apiKey": "${API_KEY}"
-  }
-}
-JSON
+  python3 - "$CONFIG_PATH" "$API_KEY" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+config_path = Path(sys.argv[1])
+api_key = sys.argv[2]
+payload = {"googleMaps": {"apiKey": api_key}}
+config_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+PY
 fi

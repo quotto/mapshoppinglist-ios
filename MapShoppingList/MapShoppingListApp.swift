@@ -58,7 +58,10 @@ struct MapShoppingListApp: App {
                 geocodingService: UnavailableGeocodingService(reason: reason),
                 geofenceRegistryRepository: NoopGeofenceRegistryRepository(),
                 notificationScheduler: notificationScheduler,
-                locationPermissionManager: locationManager
+                locationPermissionManager: locationManager,
+                currentLocationProvider: FixedCurrentLocationProvider(
+                    coordinate: PlaceSearchViewModel.fallbackCoordinate
+                )
             )
         }
         let environment = AppEnvironment.shared
