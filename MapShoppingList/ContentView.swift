@@ -89,7 +89,7 @@ struct ContentView: View {
                 }
             }
             .overlay { ProgressView().opacity(viewModel.isLoading ? 1 : 0) }
-            .navigationTitle("買い忘れリスト")
+            .navigationTitle("買い物リスト")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {

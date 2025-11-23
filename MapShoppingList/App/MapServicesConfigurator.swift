@@ -14,8 +14,10 @@ struct MapServicesConfigurator {
     /// 環境変数 `GOOGLE_MAPS_API_KEY` からAPIキーを読み込み、SDKを初期化する。
     /// - Returns: Places検索サービス実装と、警告表示が必要な場合のメッセージ。
     static func configure() -> Result {
+        let secrets = AppSecrets.load()
         let environment = ProcessInfo.processInfo.environment
-        guard let apiKey = environment["GOOGLE_MAPS_API_KEY"], apiKey.isEmpty == false else {
+        let apiKey = secrets?.googleMaps?.apiKey ?? environment["GOOGLE_MAPS_API_KEY"]
+        guard let apiKey, apiKey.isEmpty == false else {
             let message = "Google Maps/Places APIキーが設定されていません。ビルド環境の環境変数 GOOGLE_MAPS_API_KEY を設定してください。"
             return Result(
                 placesService: UnavailablePlacesSearchService(reason: message),

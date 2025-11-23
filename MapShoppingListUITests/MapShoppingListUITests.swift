@@ -240,3 +240,22 @@ final class ItemEditorUITests: BaseUITestCase {
         assertExists(placeCountLabel, in: app)
     }
 }
+
+final class PlaceSearchUITests: BaseUITestCase {
+    func testPlaceSearchSheetHidesNavigationTitle() {
+        let app = launchApp()
+        let addButton = app.buttons[UITestIdentifiers.Home.fabAddItem]
+        assertExists(addButton, in: app)
+        addButton.tap()
+
+        let searchButton = app.buttons["Googleで地点を検索"]
+        assertExists(searchButton, in: app)
+        searchButton.tap()
+
+        let queryField = app.textFields["店名や施設名を入力"]
+        let exists = queryField.waitForExistence(timeout: 10)
+        XCTAssertTrue(exists, "地点検索シートのテキストフィールドが表示されませんでした")
+
+        XCTAssertFalse(app.navigationBars["地点を検索"].waitForExistence(timeout: 1))
+    }
+}

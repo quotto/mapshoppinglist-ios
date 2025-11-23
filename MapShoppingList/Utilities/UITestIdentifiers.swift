@@ -36,6 +36,10 @@ enum UITestIdentifiers {
         static let addButton = "recent_places.add_button"
     }
 
+    enum PlaceSearch {
+        static let closeButton = "place_search.close"
+    }
+
     enum PermissionPrompt {
         static let locationCard = Home.permissionLocationCard
         static let notificationCard = Home.permissionNotificationCard

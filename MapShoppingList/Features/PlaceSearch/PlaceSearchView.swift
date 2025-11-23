@@ -22,18 +22,20 @@ struct PlaceSearchView: View {
                 Spacer()
             }
             .padding()
-            .navigationTitle("地点を検索")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }
+                        .accessibilityIdentifier(UITestIdentifiers.PlaceSearch.closeButton)
                 }
             }
         }
+        .task { await viewModel.loadInitialCameraIfNeeded() }
     }
 
     private var mapContainer: some View {
         ZStack(alignment: .topLeading) {
             PlaceSearchMapView(
+                initialCameraCoordinate: viewModel.initialCameraCoordinate,
                 coordinate: viewModel.selectedCoordinate,
                 onCoordinateSelected: { coordinate in
                     viewModel.updateCoordinateFromMap(coordinate)
