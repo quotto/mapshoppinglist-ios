@@ -349,15 +349,21 @@ flowchart LR
 ## 11. CI/CD 運用方針
 
 ### 11.1 概要
-- **基盤**: XCodeCloud
+- **基盤**
+    - XCodeCloud を採用する
 
-- **ワークフロー**: `.github/workflows/ios-ci.yml`
-    - `push`（`main` / `feature/**`）および `pull_request`（base=`main`）で起動。
-    - ジョブ `build-and-test` が macOS 14 ランナー上で `Scripts/run-tests.sh` を実行し、`MapShoppingList` スキームのユニットテストを iPhone 15 Pro Max（iOS 17.5）シミュレータで実行する。
-    - ビルド前に `xcodebuild -resolvePackageDependencies` を実行し、SwiftPM 依存関係を確定させる。
+- **ワークフローの種類**
+    - **ブランチプッシュ**
+        - `main`および`release`ブランチ以外へのプッシュ時にトリガーされる。
+        - ユニットテスト、UIテストを実行し、コードの品質を確保する。
+    - **プルリクエスト**
+        - `release`ブランチへのプルリクエスト作成時にトリガーされる。
+        - TestFlightへのアップロードを実行する。
+    - **リリース**
+        - `release`ブランチへのマージ時にトリガーされる。
+        - App Store Connectへのアップロードを実行する。
 - **テストスクリプト**: `Scripts/run-tests.sh`
     - シミュレータやスキームは環境変数 `DESTINATION` / `SCHEME` / `PROJECT_PATH` で上書き可能。
-    - CI では `GOOGLE_MAPS_API_KEY`（ダミー値）を渡し、Places 検索機能が未設定警告を出さないようにする。実運用時はリポジトリ Secrets 側で実キーを設定し、ジョブの環境変数に上書きする。
 - **成果物/レポート**: 現時点では生成なし。将来的に `xcresult` のアーカイブが必要になった場合は `actions/upload-artifact` を追加する。
 
 ### 11.2 ビルド時の秘密情報の扱い

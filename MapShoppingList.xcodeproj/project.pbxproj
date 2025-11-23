@@ -475,6 +475,7 @@
 				DEVELOPMENT_TEAM = MM4G8YRVBB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "地図で買い物リスト";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "位置情報を利用して登録済みのお店付近でリマインド通知を行います。";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "位置情報を利用して登録済みのお店付近でリマインド通知を行います。";
@@ -517,6 +518,7 @@
 				DEVELOPMENT_TEAM = MM4G8YRVBB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "地図で買い物リスト";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "位置情報を利用して登録済みのお店付近でリマインド通知を行います。";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "位置情報を利用して登録済みのお店付近でリマインド通知を行います。";
