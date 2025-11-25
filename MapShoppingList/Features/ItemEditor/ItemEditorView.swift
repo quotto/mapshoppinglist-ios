@@ -99,13 +99,27 @@ struct ItemEditorView: View {
                 Button("キャンセル", role: .cancel) {}
             }
             .sheet(isPresented: $showPlaceSearch) {
-                PlaceSearchView(environment: environment) { place in
-                    viewModel.handlePlaceCreated(place)
+                if #available(iOS 18.0, *) {
+                    PlaceSearchView(environment: environment) { place in
+                        viewModel.handlePlaceCreated(place)
+                    }
+                    .presentationSizing(.page)
+                } else {
+                    PlaceSearchView(environment: environment) { place in
+                        viewModel.handlePlaceCreated(place)
+                    }
                 }
             }
             .sheet(isPresented: $showRecentPlaces) {
-                RecentPlacesPickerView(environment: environment, initialSelection: viewModel.selectedPlaceIds) { selection in
-                    viewModel.selectedPlaceIds = selection
+                if #available(iOS 18.0, *) {
+                    RecentPlacesPickerView(environment: environment, initialSelection: viewModel.selectedPlaceIds) { selection in
+                        viewModel.selectedPlaceIds = selection
+                    }
+                    .presentationSizing(.page)
+                } else {
+                    RecentPlacesPickerView(environment: environment, initialSelection: viewModel.selectedPlaceIds) { selection in
+                        viewModel.selectedPlaceIds = selection
+                    }
                 }
             }
         }
