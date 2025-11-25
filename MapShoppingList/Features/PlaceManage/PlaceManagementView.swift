@@ -41,12 +41,24 @@ struct PlaceManagementView: View {
                     Text("選択した地点を削除します。よろしいですか？")
                 }
                 .sheet(item: $viewModel.renamingPlace) { place in
-                    RenamePlaceSheet(place: place, newName: $viewModel.newName) {
-                        Task { await viewModel.commitRename() }
+                    if #available(iOS 18.0, *) {
+                        RenamePlaceSheet(place: place, newName: $viewModel.newName) {
+                            Task { await viewModel.commitRename() }
+                        }
+                        .presentationSizing(.page)
+                    } else {
+                        RenamePlaceSheet(place: place, newName: $viewModel.newName) {
+                            Task { await viewModel.commitRename() }
+                        }
                     }
                 }
                 .sheet(isPresented: $showCreation, onDismiss: { Task { await viewModel.load() } }) {
-                    PlaceCreationView(environment: environment)
+                    if #available(iOS 18.0, *) {
+                        PlaceCreationView(environment: environment)
+                            .presentationSizing(.page)
+                    } else {
+                        PlaceCreationView(environment: environment)
+                    }
                 }
         }
     }
