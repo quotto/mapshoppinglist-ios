@@ -28,125 +28,147 @@ struct ContentView: View {
     }
 
     var body: some View {
-        ZStack {
-            NavigationView {
-            ZStack(alignment: .bottomTrailing) {
-                List {
-                if permissionViewModel.needsLocationPrompt || permissionViewModel.needsNotificationPrompt {
-                    PermissionPromptSection(viewModel: permissionViewModel)
-                }
-                if !viewModel.pendingItems.isEmpty {
-                    Section("未購入") {
-                        ForEach(viewModel.pendingItems) { item in
-                            ShoppingItemRowView(item: item) {
-                                Task { await viewModel.togglePurchased(item: item) }
+            ZStack {
+                NavigationView {
+
+                    ZStack(alignment: .bottomTrailing) {
+                        List {
+                            if permissionViewModel.needsLocationPrompt || permissionViewModel.needsNotificationPrompt {
+                                PermissionPromptSection(viewModel: permissionViewModel)
                             }
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) {
-                                    Task { await viewModel.delete(item: item) }
-                                } label: {
-                                    Label("削除", systemImage: "trash")
+                            if !viewModel.pendingItems.isEmpty {
+                                Section("未購入") {
+                                    ForEach(viewModel.pendingItems) { item in
+                                        ShoppingItemRowView(item: item) {
+                                            Task { await viewModel.togglePurchased(item: item) }
+                                        }
+                                        .swipeActions(edge: .trailing) {
+                                            Button(role: .destructive) {
+                                                Task { await viewModel.delete(item: item) }
+                                            } label: {
+                                                Label("削除", systemImage: "trash")
+                                            }
+                                        }
+                                        .contentShape(Rectangle())
+                                        .onTapGesture { editorConfig = EditorConfig(mode: .edit(item.id)) }
+                                    }
                                 }
                             }
-                            .contentShape(Rectangle())
-                            .onTapGesture { editorConfig = EditorConfig(mode: .edit(item.id)) }
-                        }
-                    }
-                }
-                if !viewModel.purchasedItems.isEmpty {
-                    Section("購入済み") {
-                        ForEach(viewModel.purchasedItems) { item in
-                            ShoppingItemRowView(item: item) {
-                                Task { await viewModel.togglePurchased(item: item) }
-                            }
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) {
-                                    Task { await viewModel.delete(item: item) }
-                                } label: {
-                                    Label("削除", systemImage: "trash")
+                            if !viewModel.purchasedItems.isEmpty {
+                                Section("購入済み") {
+                                    ForEach(viewModel.purchasedItems) { item in
+                                        ShoppingItemRowView(item: item) {
+                                            Task { await viewModel.togglePurchased(item: item) }
+                                        }
+                                        .swipeActions(edge: .trailing) {
+                                            Button(role: .destructive) {
+                                                Task { await viewModel.delete(item: item) }
+                                            } label: {
+                                                Label("削除", systemImage: "trash")
+                                            }
+                                        }
+                                        .contentShape(Rectangle())
+                                        .onTapGesture { editorConfig = EditorConfig(mode: .edit(item.id)) }
+                                    }
                                 }
                             }
-                            .contentShape(Rectangle())
-                            .onTapGesture { editorConfig = EditorConfig(mode: .edit(item.id)) }
+                            if viewModel.pendingItems.isEmpty && viewModel.purchasedItems.isEmpty && viewModel.isLoading == false {
+                                Section {
+                                    VStack(alignment: .center) {
+                                        Image(systemName: "cart")
+                                            .font(.largeTitle)
+                                            .foregroundStyle(.secondary)
+                                        Text("アイテムがありません")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                            .padding(.top, 4)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityIdentifier(UITestIdentifiers.Home.emptyState)
+                                }
+                            }
+                        }
+                    .overlay { ProgressView().opacity(viewModel.isLoading ? 1 : 0) }
+                    .task {
+                        let shouldHandlePermissions = LaunchArguments.isUITesting == false && LaunchArguments.isRunningTests == false
+                        if shouldHandlePermissions {
+                            await permissionViewModel.refreshStatuses()
+                            await permissionViewModel.requestLocationAuthorization()
+                            await environment.geofenceCoordinator.syncActiveGeofences()
+                        }
+                        await viewModel.load()
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: .geofenceNeedsSync)) { _ in
+                        guard LaunchArguments.isUITesting == false, LaunchArguments.isRunningTests == false else { return }
+                        Task { await environment.geofenceCoordinator.syncActiveGeofences() }
+                    }
+                    .alert("エラー", isPresented: Binding<Bool>(
+                        get: { viewModel.errorMessage != nil },
+                        set: { if !$0 { viewModel.errorMessage = nil } }
+                    )) {
+                        Button("OK", role: .cancel) { viewModel.errorMessage = nil }
+                    } message: {
+                        Text(viewModel.errorMessage ?? "")
+                    }
+                    .sheet(item: $editorConfig, onDismiss: { Task { await viewModel.load() } }) { config in
+                        if #available(iOS 18.0, *) {
+                            ItemEditorView(mode: config.mode, environment: environment)
+                                .presentationSizing(.page)
+                        } else {
+                            ItemEditorView(mode: config.mode, environment: environment)
                         }
                     }
-                }
-                if viewModel.pendingItems.isEmpty && viewModel.purchasedItems.isEmpty && viewModel.isLoading == false {
-                    Section {
-                        VStack(alignment: .center) {
-                            Image(systemName: "cart")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                            Text("アイテムがありません")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 4)
+                    .sheet(isPresented: $showPlaceManagement) {
+                        if #available(iOS 18.0, *) {
+                            PlaceManagementView(environment: environment)
+                                .presentationSizing(.page)
+                        } else {
+                            PlaceManagementView(environment: environment)
                         }
-                        .frame(maxWidth: .infinity)
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityIdentifier(UITestIdentifiers.Home.emptyState)
                     }
-                }
-            }
-            .overlay { ProgressView().opacity(viewModel.isLoading ? 1 : 0) }
-            .navigationTitle("買い忘れリスト")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            showSidebar = true
+                    .sheet(isPresented: $showPrivacyPolicy) {
+                        if #available(iOS 18.0, *) {
+                            PrivacyPolicyView()
+                                .presentationSizing(.page)
+                        } else {
+                            PrivacyPolicyView()
                         }
-                    } label: {
-                        Image(systemName: "line.3.horizontal")
-                            .accessibilityLabel("メニュー")
-                            .accessibilityIdentifier(UITestIdentifiers.Home.menuButton)
                     }
+                    .sheet(isPresented: $showOssLicenses) {
+                        if #available(iOS 18.0, *) {
+                            OssLicensesView()
+                                .presentationSizing(.page)
+                        } else {
+                            OssLicensesView()
+                        }
+                    }
+                    
+                    // フローティングアクションボタン
+                    FloatingActionButton {
+                        editorConfig = EditorConfig(mode: .create)
+                    }
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 16)
+                    .accessibilityIdentifier(UITestIdentifiers.Home.fabAddItem)
                 }
+                    .navigationTitle("買い物リスト")
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    showSidebar = true
+                                }
+                            } label: {
+                                Image(systemName: "line.3.horizontal")
+                                    .accessibilityLabel("メニュー")
+                                    .accessibilityIdentifier(UITestIdentifiers.Home.menuButton)
+                            }
+                        }
+                    }
             }
-            .task {
-                let shouldHandlePermissions = LaunchArguments.isUITesting == false && LaunchArguments.isRunningTests == false
-                if shouldHandlePermissions {
-                    await permissionViewModel.refreshStatuses()
-                    await permissionViewModel.requestLocationAuthorization()
-                    await environment.geofenceCoordinator.syncActiveGeofences()
-                }
-                await viewModel.load()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .geofenceNeedsSync)) { _ in
-                guard LaunchArguments.isUITesting == false, LaunchArguments.isRunningTests == false else { return }
-                Task { await environment.geofenceCoordinator.syncActiveGeofences() }
-            }
-            .alert("エラー", isPresented: Binding<Bool>(
-                get: { viewModel.errorMessage != nil },
-                set: { if !$0 { viewModel.errorMessage = nil } }
-            )) {
-                Button("OK", role: .cancel) { viewModel.errorMessage = nil }
-            } message: {
-                Text(viewModel.errorMessage ?? "")
-            }
-            .sheet(item: $editorConfig, onDismiss: { Task { await viewModel.load() } }) { config in
-                ItemEditorView(mode: config.mode, environment: environment)
-            }
-            .sheet(isPresented: $showPlaceManagement) {
-                PlaceManagementView(environment: environment)
-            }
-            .sheet(isPresented: $showPrivacyPolicy) {
-                PrivacyPolicyView()
-            }
-            .sheet(isPresented: $showOssLicenses) {
-                OssLicensesView()
-            }
-                
-                // フローティングアクションボタン
-                FloatingActionButton {
-                    editorConfig = EditorConfig(mode: .create)
-                }
-                .padding(.trailing, 16)
-                .padding(.bottom, 16)
-                .accessibilityIdentifier(UITestIdentifiers.Home.fabAddItem)
-            }
-            }
-            
+                .navigationViewStyle(.stack)
+
             // 左側からスライドインするサイドバー
             SlidingSidebarMenuView(
                 showPlaceManagement: $showPlaceManagement,

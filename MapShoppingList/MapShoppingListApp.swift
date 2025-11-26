@@ -16,10 +16,10 @@ struct MapShoppingListApp: App {
 
     init() {
         if LaunchArguments.isUITesting {
-            environment = Self.makeTestEnvironment(reason: "UITests")
+            environment = Self.makeTestEnvironment(reason: "UITests", useRealMaps: true)
             _configurationWarning = State(initialValue: nil)
         } else if LaunchArguments.isUnitTesting {
-            environment = Self.makeTestEnvironment(reason: "UnitTests")
+            environment = Self.makeTestEnvironment(reason: "UnitTests", useRealMaps: false)
             _configurationWarning = State(initialValue: nil)
         } else {
             let result = MapServicesConfigurator.configure()
@@ -32,7 +32,7 @@ struct MapShoppingListApp: App {
         }
     }
 
-    private static func makeTestEnvironment(reason: String) -> AppEnvironment {
+    private static func makeTestEnvironment(reason: String, useRealMaps: Bool) -> AppEnvironment {
         let stack = CoreDataStack.makeInMemory()
         let locationManager = NoopLocationPermissionManager(
             status: LaunchArguments.locationAuthorizationOverride ?? .authorizedAlways
@@ -40,14 +40,30 @@ struct MapShoppingListApp: App {
         let notificationScheduler = NoopNotificationScheduler(
             status: LaunchArguments.notificationAuthorizationOverride ?? .authorized
         )
-        AppEnvironment.configureShared(
-            stack: stack,
-            placesSearchService: UnavailablePlacesSearchService(reason: reason),
-            geocodingService: UnavailableGeocodingService(reason: reason),
-            geofenceRegistryRepository: NoopGeofenceRegistryRepository(),
-            notificationScheduler: notificationScheduler,
-            locationPermissionManager: locationManager
-        )
+        if useRealMaps {
+            let mapResult = MapServicesConfigurator.configure()
+            AppEnvironment.configureShared(
+                stack: stack,
+                placesSearchService: mapResult.placesService,
+                geocodingService: mapResult.geocodingService,
+                geofenceRegistryRepository: NoopGeofenceRegistryRepository(),
+                notificationScheduler: notificationScheduler,
+                locationPermissionManager: locationManager,
+                currentLocationProvider: DefaultCurrentLocationProvider()
+            )
+        } else {
+            AppEnvironment.configureShared(
+                stack: stack,
+                placesSearchService: UnavailablePlacesSearchService(reason: reason),
+                geocodingService: UnavailableGeocodingService(reason: reason),
+                geofenceRegistryRepository: NoopGeofenceRegistryRepository(),
+                notificationScheduler: notificationScheduler,
+                locationPermissionManager: locationManager,
+                currentLocationProvider: FixedCurrentLocationProvider(
+                    coordinate: PlaceSearchViewModel.fallbackCoordinate
+                )
+            )
+        }
         let environment = AppEnvironment.shared
         UITestScenarioSeeder.seedIfNeeded(environment: environment)
         return environment

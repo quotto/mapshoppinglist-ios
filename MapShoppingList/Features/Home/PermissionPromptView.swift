@@ -38,6 +38,7 @@ struct PermissionPromptSection: View {
                 )
             }
         }
+        .frame(maxWidth: .infinity, alignment: .center)
         .padding(.horizontal, 16)
         .background(Color(uiColor: .systemGroupedBackground))
         .listRowInsets(EdgeInsets())
@@ -112,6 +113,7 @@ private struct PermissionPromptCard: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(Color.appSecondaryContainer.opacity(0.5), in: RoundedRectangle(cornerRadius: 16))
         .modifier(AccessibilityIdentifierModifier(identifier: identifier))

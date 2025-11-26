@@ -43,3 +43,9 @@ fastlane/test_output
 iOSInjectionProject/
 work/reports/
 work/tasks/
+
+# Build-generated secrets
+AppSecrets.json
+
+# xcconfigs
+*.xcconfig
