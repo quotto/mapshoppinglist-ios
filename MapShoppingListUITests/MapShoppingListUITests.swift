@@ -258,4 +258,18 @@ final class PlaceSearchUITests: BaseUITestCase {
 
         XCTAssertFalse(app.navigationBars["地点を検索"].waitForExistence(timeout: 1))
     }
+
+    func testPlaceSearchOpensWhenLocationDenied() {
+        let app = launchApp(locationStatus: UITestLocationStatusValue.denied)
+        let addButton = app.buttons[UITestIdentifiers.Home.fabAddItem]
+        assertExists(addButton, in: app)
+        addButton.tap()
+
+        let searchButton = app.buttons["Googleで地点を検索"]
+        assertExists(searchButton, in: app)
+        searchButton.tap()
+
+        let queryField = app.textFields["店名や施設名を入力"]
+        assertExists(queryField, in: app)
+    }
 }

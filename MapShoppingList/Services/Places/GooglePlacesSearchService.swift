@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 import GooglePlaces
 
 /// Google Places SDK を利用した検索サービス実装。
@@ -9,7 +10,11 @@ final class GooglePlacesSearchService: PlacesSearchService {
         self.client = client
     }
 
-    func autocomplete(query: String, session: PlacesAutocompleteSession?) async throws -> PlacesAutocompleteResponse {
+    func search(
+        query: String,
+        session: PlacesSearchSession?,
+        origin: CLLocationCoordinate2D?
+    ) async throws -> PlacesSearchResponse {
         let token: GMSAutocompleteSessionToken
         if let existingToken = session?.identifier as? GMSAutocompleteSessionToken {
             token = existingToken
@@ -17,33 +22,73 @@ final class GooglePlacesSearchService: PlacesSearchService {
             token = GMSAutocompleteSessionToken()
         }
 
-        let predictions: [PlaceAutocompletePrediction] = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[PlaceAutocompletePrediction], Error>) in
-            let filter = GMSAutocompleteFilter()
-            filter.type = .establishment
-
-            client.findAutocompletePredictions(fromQuery: query, filter: filter, sessionToken: token) { results, error in
+        let places: [PlaceDetails] = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[PlaceDetails], Error>) in
+//            let filter = GMSAutocompleteFilter()
+//            
+//            if let origin {
+//                let center = CLLocationCoordinate2DMake(origin.latitude, origin.longitude)
+//                
+//                filter.locationBias = GMSPlaceCircularLocationOption(center, 5000.0)
+//            }
+//            let request = GMSAutocompleteRequest(query: query)
+//            request.filter = filter
+//            request.sessionToken = token
+//            
+//
+//            client.fetchAutocompleteSuggestions(from: request) { results, error in
+//                if let error = error as NSError? {
+//                    continuation.resume(throwing: self.mapPlacesError(error))
+//                    return
+//                }
+//                let mapped = results?.map { result in
+//                    PlaceAutocompletePrediction(
+//                        id: result.placeSuggestion?.placeID ?? "",
+//                        primaryText: result.placeSuggestion?.attributedPrimaryText.string ?? "",
+//                        secondaryText: result.placeSuggestion?.attributedSecondaryText?.string ?? "",
+//                        distanceMeters: result.placeSuggestion?.distanceMeters?.doubleValue
+//                    )
+//                }
+//                continuation.resume(returning: mapped ?? [])
+//            }
+            
+            let myProperties = [GMSPlaceProperty.name, GMSPlaceProperty.placeID, GMSPlaceProperty.formattedAddress].map {$0.rawValue}
+            let request = GMSPlaceSearchByTextRequest(textQuery:query, placeProperties:myProperties)
+            request.isOpenNow = false
+            request.rankPreference = .distance
+            request.maxResultCount = 10
+            if let origin {
+                request.locationBias =  GMSPlaceCircularLocationOption(CLLocationCoordinate2DMake(origin.latitude, origin.longitude), 5000.0)
+            }
+            client.searchByText(with: request) { results, error in
                 if let error = error as NSError? {
                     continuation.resume(throwing: self.mapPlacesError(error))
                     return
                 }
-                let mapped = (results ?? []).map { prediction in
-                    PlaceAutocompletePrediction(
-                        id: prediction.placeID,
-                        primaryText: prediction.attributedPrimaryText.string,
-                        secondaryText: prediction.attributedSecondaryText?.string,
-                        distanceMeters: prediction.distanceMeters?.doubleValue
+                let mapped = results?.map { result in
+//                    PlaceAutocompletePrediction(
+//                        id: result.placeID ?? "",
+//                        primaryText: result.name ?? "",
+//                        secondaryText: result.formattedAddress ?? "",
+//                        distanceMeters: nil
+//                    )
+                    PlaceDetails (
+                        id: result.placeID ?? "",
+                        name: result.name ?? "",
+                        latitude: result.coordinate.latitude,
+                        longitude: result.coordinate.longitude,
+                        formattedAddress: result.formattedAddress
                     )
                 }
-                continuation.resume(returning: mapped)
+                continuation.resume(returning: mapped ?? [])
             }
         }
-        return PlacesAutocompleteResponse(
-            session: PlacesAutocompleteSession(identifier: token),
-            predictions: predictions
+        return PlacesSearchResponse(
+            session: PlacesSearchSession(identifier: token),
+            places: places
         )
     }
 
-    func fetchPlaceDetails(placeId: String, session: PlacesAutocompleteSession) async throws -> PlaceDetails {
+    func fetchPlaceDetails(placeId: String, session: PlacesSearchSession) async throws -> PlaceDetails {
         let token = session.identifier as? GMSAutocompleteSessionToken
         let properties = [
             GMSPlaceProperty.name.rawValue,
