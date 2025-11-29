@@ -183,9 +183,7 @@ final class PlaceManagementUITests: BaseUITestCase {
         let reopenedRenameField = app.textFields[UITestIdentifiers.PlaceManagement.renameTextField]
         assertExists(reopenedRenameField, in: app)
         let currentValue = reopenedRenameField.value as? String
-        XCTExpectFailure("S6の名称変更結果がUIに反映されない既知の問題") {
-            XCTAssertEqual(currentValue, "テストスーパーA リニューアル")
-        }
+        XCTAssertEqual(currentValue, "テストスーパーA リニューアル")
 
         app.buttons["キャンセル"].tap()
     }
