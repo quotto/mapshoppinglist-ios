@@ -101,7 +101,6 @@ final class PlaceSearchViewModel: ObservableObject {
                 origin: origin
             )
             currentSession = response.session
-//            predictions = sortPredictionsByDistance(response.predictions)
             places = response.places
             isPredictionListVisible = response.places.isEmpty == false
             if response.places.isEmpty {

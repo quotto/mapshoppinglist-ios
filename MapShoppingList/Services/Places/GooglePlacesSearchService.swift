@@ -23,34 +23,6 @@ final class GooglePlacesSearchService: PlacesSearchService {
         }
 
         let places: [PlaceDetails] = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[PlaceDetails], Error>) in
-//            let filter = GMSAutocompleteFilter()
-//            
-//            if let origin {
-//                let center = CLLocationCoordinate2DMake(origin.latitude, origin.longitude)
-//                
-//                filter.locationBias = GMSPlaceCircularLocationOption(center, 5000.0)
-//            }
-//            let request = GMSAutocompleteRequest(query: query)
-//            request.filter = filter
-//            request.sessionToken = token
-//            
-//
-//            client.fetchAutocompleteSuggestions(from: request) { results, error in
-//                if let error = error as NSError? {
-//                    continuation.resume(throwing: self.mapPlacesError(error))
-//                    return
-//                }
-//                let mapped = results?.map { result in
-//                    PlaceAutocompletePrediction(
-//                        id: result.placeSuggestion?.placeID ?? "",
-//                        primaryText: result.placeSuggestion?.attributedPrimaryText.string ?? "",
-//                        secondaryText: result.placeSuggestion?.attributedSecondaryText?.string ?? "",
-//                        distanceMeters: result.placeSuggestion?.distanceMeters?.doubleValue
-//                    )
-//                }
-//                continuation.resume(returning: mapped ?? [])
-//            }
-            
             let myProperties = [GMSPlaceProperty.name, GMSPlaceProperty.placeID, GMSPlaceProperty.formattedAddress].map {$0.rawValue}
             let request = GMSPlaceSearchByTextRequest(textQuery:query, placeProperties:myProperties)
             request.isOpenNow = false
@@ -65,12 +37,6 @@ final class GooglePlacesSearchService: PlacesSearchService {
                     return
                 }
                 let mapped = results?.map { result in
-//                    PlaceAutocompletePrediction(
-//                        id: result.placeID ?? "",
-//                        primaryText: result.name ?? "",
-//                        secondaryText: result.formattedAddress ?? "",
-//                        distanceMeters: nil
-//                    )
                     PlaceDetails (
                         id: result.placeID ?? "",
                         name: result.name ?? "",
