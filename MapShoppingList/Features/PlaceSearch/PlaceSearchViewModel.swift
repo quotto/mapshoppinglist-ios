@@ -20,6 +20,7 @@ final class PlaceSearchViewModel: ObservableObject {
     @Published var formErrorMessage: String?
     @Published var isOffline: Bool = false
     @Published var initialCameraCoordinate: CLLocationCoordinate2D?
+    @Published var mapCenterCoordinate: CLLocationCoordinate2D?
 
     private let placesSearchService: PlacesSearchService
     private let createPlaceUseCase: CreatePlaceUseCase
@@ -31,7 +32,6 @@ final class PlaceSearchViewModel: ObservableObject {
     private var currentSession: PlacesSearchSession?
     private var lastQuery: String?
     private var didLoadInitialCamera = false
-    private var cachedSearchOrigin: CLLocationCoordinate2D?
 
     private var selectedName: String?
     private var selectedAddress: String?
@@ -180,6 +180,7 @@ final class PlaceSearchViewModel: ObservableObject {
 
     func updateCoordinateFromMap(_ coordinate: CLLocationCoordinate2D) {
         selectedCoordinate = coordinate
+        mapCenterCoordinate = coordinate
         selectedName = nil
         selectedAddress = nil
         displayText = nil
@@ -247,16 +248,23 @@ final class PlaceSearchViewModel: ObservableObject {
         let status = locationPermissionManager.authorizationStatus()
         guard status.isAuthorized else {
             initialCameraCoordinate = Self.fallbackCoordinate
+            mapCenterCoordinate = Self.fallbackCoordinate
             return
         }
 
         do {
             let coordinate = try await locationProvider.currentLocation()
             initialCameraCoordinate = coordinate
+            mapCenterCoordinate = coordinate
         } catch {
             // 現在地が取得できない場合は東京駅でフォールバックする
             initialCameraCoordinate = Self.fallbackCoordinate
+            mapCenterCoordinate = Self.fallbackCoordinate
         }
+    }
+
+    func updateMapCenter(_ coordinate: CLLocationCoordinate2D) {
+        mapCenterCoordinate = coordinate
     }
 
     private func apply(details: PlaceDetails) {
@@ -284,28 +292,20 @@ final class PlaceSearchViewModel: ObservableObject {
     }
 
     private func resolveSearchOrigin() async -> CLLocationCoordinate2D? {
-        if let cachedSearchOrigin {
-            return cachedSearchOrigin
+        if let mapCenterCoordinate {
+            return mapCenterCoordinate
         }
 
-        // 位置権限が許可されている場合は現在地を最優先で使う
-        if locationPermissionManager.authorizationStatus().isAuthorized {
-            if let coordinate = try? await locationProvider.currentLocation() {
-                cachedSearchOrigin = coordinate
-                return coordinate
-            }
-        }
-
-        // 現在地が取れない場合は初期カメラ座標（フォールバック含む）を利用する
+        // 地図中心が未取得の場合でも初期カメラ座標をフォールバックとして用いる
         if didLoadInitialCamera == false {
             await loadInitialCameraIfNeeded()
         }
-        if let initialCameraCoordinate {
-            cachedSearchOrigin = initialCameraCoordinate
-            return initialCameraCoordinate
+
+        if let mapCenterCoordinate {
+            return mapCenterCoordinate
         }
 
-        return nil
+        return initialCameraCoordinate
     }
 
 

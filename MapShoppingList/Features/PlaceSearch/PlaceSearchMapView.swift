@@ -5,9 +5,15 @@ import GoogleMaps
 struct PlaceSearchMapView: UIViewRepresentable {
     final class Coordinator: NSObject, GMSMapViewDelegate {
         var parent: PlaceSearchMapView
+        var lastMarkerCoordinate: CLLocationCoordinate2D?
+        var lastInitialCenter: CLLocationCoordinate2D?
 
         init(parent: PlaceSearchMapView) {
             self.parent = parent
+        }
+
+        func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {
+            parent.onCameraIdle(position.target)
         }
 
         func mapView(_ mapView: GMSMapView, didLongPressAt coordinate: CLLocationCoordinate2D) {
@@ -25,6 +31,7 @@ struct PlaceSearchMapView: UIViewRepresentable {
     let coordinate: CLLocationCoordinate2D?
     let onCoordinateSelected: (CLLocationCoordinate2D) -> Void
     let onPOITapped: (String, String, CLLocationCoordinate2D) -> Void
+    let onCameraIdle: (CLLocationCoordinate2D) -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -39,17 +46,30 @@ struct PlaceSearchMapView: UIViewRepresentable {
         if let coord = coordinate {
             updateMarker(on: mapView, coordinate: coord)
         }
+        context.coordinator.lastInitialCenter = initial
+        // 初期表示時にも中心座標を通知して検索基点に利用できるようにする
+        onCameraIdle(mapView.camera.target)
         return mapView
     }
 
     func updateUIView(_ mapView: GMSMapView, context: Context) {
         if let coord = coordinate {
-            mapView.animate(toLocation: coord)
-            updateMarker(on: mapView, coordinate: coord)
-        } else {
-            mapView.clear()
-            let initial = initialCameraCoordinate ?? PlaceSearchViewModel.fallbackCoordinate
-            mapView.animate(toLocation: initial)
+            // 選択座標が更新された時のみカメラ・マーカーを動かす
+            if context.coordinator.lastMarkerCoordinate?.latitude != coord.latitude ||
+                context.coordinator.lastMarkerCoordinate?.longitude != coord.longitude {
+                mapView.animate(toLocation: coord)
+                updateMarker(on: mapView, coordinate: coord)
+                context.coordinator.lastMarkerCoordinate = coord
+            }
+            return
+        }
+
+        // 選択地点が無い場合は初期カメラ座標が更新された時のみ反映する。
+        if let initialCameraCoordinate,
+           (context.coordinator.lastInitialCenter?.latitude != initialCameraCoordinate.latitude ||
+            context.coordinator.lastInitialCenter?.longitude != initialCameraCoordinate.longitude) {
+            mapView.animate(toLocation: initialCameraCoordinate)
+            context.coordinator.lastInitialCenter = initialCameraCoordinate
         }
     }
 
