@@ -39,7 +39,10 @@ struct PlaceSearchMapView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> GMSMapView {
         let initial = initialCameraCoordinate ?? coordinate ?? PlaceSearchViewModel.fallbackCoordinate
-        let mapView = GMSMapView(frame: .zero, camera: GMSCameraPosition(latitude: initial.latitude, longitude: initial.longitude, zoom: 14))
+        let options = GMSMapViewOptions()
+        options.camera = GMSCameraPosition(latitude: initial.latitude, longitude: initial.longitude, zoom: 14)
+        options.frame = .zero
+        let mapView = GMSMapView(options: options)
         mapView.delegate = context.coordinator
         mapView.settings.myLocationButton = false
         mapView.isMyLocationEnabled = false
