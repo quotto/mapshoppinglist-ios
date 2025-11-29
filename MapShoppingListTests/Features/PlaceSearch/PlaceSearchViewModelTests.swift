@@ -283,8 +283,8 @@ struct PlaceSearchViewModelTests {
         #expect(viewModel.initialCameraCoordinate?.longitude == 139.767066)
     }
 
-    @Test("search uses current location as origin")
-    func searchUsesCurrentLocationAsOrigin() async {
+    @Test("search uses map center as origin")
+    func searchUsesMapCenterAsOrigin() async {
         let session = PlacesSearchSession(identifier: NSObject())
         let place = PlaceDetails(
             id: "nearby",
@@ -315,12 +315,63 @@ struct PlaceSearchViewModelTests {
             locationProvider: locationProvider
         )
 
+        viewModel.mapCenterCoordinate = CLLocationCoordinate2D(latitude: 11.0, longitude: 22.0)
         viewModel.query = "スーパー"
         await viewModel.performSearch()
 
         let recordedOrigin = stubService.receivedOrigins.first ?? nil
-        #expect(recordedOrigin?.latitude == 10.0)
-        #expect(recordedOrigin?.longitude == 20.0)
+        #expect(recordedOrigin?.latitude == 11.0)
+        #expect(recordedOrigin?.longitude == 22.0)
+    }
+
+    @Test("search uses latest map center after move")
+    func searchUsesLatestMapCenterAfterMove() async {
+        let firstSession = PlacesSearchSession(identifier: NSObject())
+        let secondSession = PlacesSearchSession(identifier: NSObject())
+        let place = PlaceDetails(
+            id: "move",
+            name: "移動後",
+            latitude: 0.0,
+            longitude: 0.0,
+            formattedAddress: "東京都"
+        )
+
+        let stubService = StubPlacesSearchService()
+        stubService.enqueueSearchResult(.success(PlacesSearchResponse(session: firstSession, places: [place])))
+        stubService.enqueueSearchResult(.success(PlacesSearchResponse(session: secondSession, places: [place])))
+
+        let repository = InMemoryPlacesRepository()
+        let useCase = CreatePlaceUseCase(placesRepository: repository)
+        let geocoder = StubGeocodingService()
+        let network = StubNetworkMonitor(isConnected: true)
+        let permission = StubLocationPermissionManager(status: .authorizedWhenInUse)
+        let locationProvider = StubCurrentLocationProvider(
+            result: .success(CLLocationCoordinate2D(latitude: 33.0, longitude: 44.0))
+        )
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
+
+        viewModel.mapCenterCoordinate = CLLocationCoordinate2D(latitude: 1.0, longitude: 2.0)
+        viewModel.query = "スーパー"
+        await viewModel.performSearch()
+
+        viewModel.updateMapCenter(CLLocationCoordinate2D(latitude: 5.0, longitude: 6.0))
+        viewModel.query = "スーパー2"
+        await viewModel.performSearch()
+
+        #expect(stubService.receivedOrigins.count == 2)
+        let firstOrigin = stubService.receivedOrigins.first ?? nil
+        let lastOrigin = stubService.receivedOrigins.last ?? nil
+        #expect(firstOrigin?.latitude == 1.0)
+        #expect(firstOrigin?.longitude == 2.0)
+        #expect(lastOrigin?.latitude == 5.0)
+        #expect(lastOrigin?.longitude == 6.0)
     }
 
     @Test("search falls back to initial camera when location unavailable")

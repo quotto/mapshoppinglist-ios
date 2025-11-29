@@ -42,6 +42,9 @@ struct PlaceSearchView: View {
                 },
                 onPOITapped: { placeID, _, _ in
                     Task { await viewModel.selectPlace(by: placeID) }
+                },
+                onCameraIdle: { center in
+                    viewModel.updateMapCenter(center)
                 }
             )
             .cornerRadius(12)
