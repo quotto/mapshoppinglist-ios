@@ -30,7 +30,6 @@ final class PlaceSearchViewModel: ObservableObject {
     private let locationProvider: CurrentLocationProviding
     private var cancellable: AnyCancellable?
     private var currentSession: PlacesSearchSession?
-    private var lastQuery: String?
     private var didLoadInitialCamera = false
 
     private var selectedName: String?
@@ -78,7 +77,6 @@ final class PlaceSearchViewModel: ObservableObject {
             currentSession = nil
             searchErrorMessage = nil
             isSearchRetryable = false
-            lastQuery = nil
             return
         }
         guard isOffline == false else {
@@ -91,23 +89,18 @@ final class PlaceSearchViewModel: ObservableObject {
         isSearchRetryable = false
         do {
             let origin = await resolveSearchOrigin()
-            let reuseSession = (
-                currentSession != nil &&
-                (lastQuery.map { trimmed.hasPrefix($0) } ?? false)
-            )
             let response = try await placesSearchService.search(
                 query: trimmed,
-                session: reuseSession ? currentSession : nil,
+                session: nil,
                 origin: origin
             )
-            currentSession = response.session
+            currentSession = nil
             places = response.places
             isPredictionListVisible = response.places.isEmpty == false
             if response.places.isEmpty {
                 searchErrorMessage = "候補が見つかりませんでした。条件を変えて検索してください。"
                 isSearchRetryable = false
             }
-            lastQuery = trimmed
         } catch let error as PlacesSearchError {
             handleSearchError(error)
         } catch {
@@ -118,10 +111,6 @@ final class PlaceSearchViewModel: ObservableObject {
     }
 
     func selectPlace(_ place: PlaceDetails) async {
-        guard let session = currentSession else {
-            searchErrorMessage = "検索セッションが無効です。もう一度検索してください。"
-            return
-        }
         isPredictionListVisible = false
         isLoadingDetails = true
         searchErrorMessage = nil
@@ -134,10 +123,9 @@ final class PlaceSearchViewModel: ObservableObject {
             return
         }
         do {
-            let details = try await placesSearchService.fetchPlaceDetails(placeId: place.id, session: session)
+            let details = try await placesSearchService.fetchPlaceDetails(placeId: place.id)
             apply(details: details)
             currentSession = nil
-            lastQuery = nil
         } catch let error as PlacesSearchError {
             searchErrorMessage = error.errorDescription
             isSearchRetryable = error.isRetryable
@@ -165,7 +153,6 @@ final class PlaceSearchViewModel: ObservableObject {
             let details = try await placesSearchService.fetchPlaceDetails(placeId: placeID)
             apply(details: details)
             currentSession = nil
-            lastQuery = nil
         } catch let error as PlacesSearchError {
             searchErrorMessage = error.errorDescription
             isSearchRetryable = error.isRetryable
@@ -283,7 +270,6 @@ final class PlaceSearchViewModel: ObservableObject {
         if error.isRetryable == false {
             currentSession = nil
         }
-        lastQuery = nil
     }
 
     private static func toE6(_ value: Double) -> Int {

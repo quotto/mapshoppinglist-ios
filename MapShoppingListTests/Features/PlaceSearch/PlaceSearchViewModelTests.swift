@@ -118,11 +118,8 @@ struct PlaceSearchViewModelTests {
         #expect(viewModel.displayText == "東京都千代田区")
     }
 
-    @Test("search session is reused when refining query")
-    func searchSessionIsReusedWhenQueryIsRefined() async {
-        let firstSessionToken = NSObject()
-        let firstSession = PlacesSearchSession(identifier: firstSessionToken)
-        let secondSession = PlacesSearchSession(identifier: NSObject())
+    @Test("text search does not rely on session reuse")
+    func textSearchDoesNotRelyOnSessionReuse() async {
         let place = PlaceDetails(
             id: "prediction",
             name: "テスト",
@@ -132,8 +129,8 @@ struct PlaceSearchViewModelTests {
         )
 
         let stubService = StubPlacesSearchService()
-        stubService.enqueueSearchResult(.success(PlacesSearchResponse(session: firstSession, places: [place])))
-        stubService.enqueueSearchResult(.success(PlacesSearchResponse(session: secondSession, places: [place])))
+        stubService.enqueueSearchResult(.success(PlacesSearchResponse(session: PlacesSearchSession(identifier: NSObject()), places: [place])))
+        stubService.enqueueSearchResult(.success(PlacesSearchResponse(session: PlacesSearchSession(identifier: NSObject()), places: [place])))
 
         let repository = InMemoryPlacesRepository()
         let useCase = CreatePlaceUseCase(placesRepository: repository)
@@ -157,20 +154,7 @@ struct PlaceSearchViewModelTests {
         await viewModel.performSearch()
 
         #expect(stubService.receivedSessions.count == 2)
-        if let firstEntry = stubService.receivedSessions.first {
-            #expect(firstEntry == nil)
-        } else {
-            Issue.record("1回目のセッションが記録されていません")
-        }
-        guard let secondEntry = stubService.receivedSessions.last else {
-            Issue.record("2回目のセッションが不足しています")
-            return
-        }
-        guard let reusedSession = secondEntry else {
-            Issue.record("2回目のセッションがnilです")
-            return
-        }
-        #expect((reusedSession.identifier as AnyObject) === firstSession.identifier as AnyObject)
+        #expect(stubService.receivedSessions.allSatisfy { $0 == nil })
     }
 
     @Test("quota exceeded error disables retry")

@@ -35,7 +35,7 @@ final class StubPlacesSearchService: PlacesSearchService {
             return try result.get()
         }
         guard let result = searchResult else {
-            fatalError("autocompleteResult が設定されていません")
+            fatalError("searchResult が設定されていません")
         }
         return try result.get()
     }

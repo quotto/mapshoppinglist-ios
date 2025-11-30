@@ -15,13 +15,7 @@ final class GooglePlacesSearchService: PlacesSearchService {
         session: PlacesSearchSession?,
         origin: CLLocationCoordinate2D?
     ) async throws -> PlacesSearchResponse {
-        let token: GMSAutocompleteSessionToken
-        if let existingToken = session?.identifier as? GMSAutocompleteSessionToken {
-            token = existingToken
-        } else {
-            token = GMSAutocompleteSessionToken()
-        }
-
+        _ = session // Text Searchではセッションを利用しない
         let places: [PlaceDetails] = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[PlaceDetails], Error>) in
             let myProperties = [GMSPlaceProperty.name, GMSPlaceProperty.placeID, GMSPlaceProperty.formattedAddress].map {$0.rawValue}
             let request = GMSPlaceSearchByTextRequest(textQuery:query, placeProperties:myProperties)
@@ -49,40 +43,14 @@ final class GooglePlacesSearchService: PlacesSearchService {
             }
         }
         return PlacesSearchResponse(
-            session: PlacesSearchSession(identifier: token),
+            session: PlacesSearchSession(identifier: NSObject()),
             places: places
         )
     }
 
     func fetchPlaceDetails(placeId: String, session: PlacesSearchSession) async throws -> PlaceDetails {
-        let token = session.identifier as? GMSAutocompleteSessionToken
-        let properties = [
-            GMSPlaceProperty.name.rawValue,
-            GMSPlaceProperty.coordinate.rawValue,
-            GMSPlaceProperty.formattedAddress.rawValue,
-            GMSPlaceProperty.placeID.rawValue
-        ]
-        let request = GMSFetchPlaceRequest(placeID: placeId, placeProperties: properties, sessionToken: token)
-        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<PlaceDetails, Error>) in
-            client.fetchPlace(with: request) { place, error in
-                if let error = error as NSError? {
-                    continuation.resume(throwing: self.mapPlacesError(error))
-                    return
-                }
-                guard let place = place else {
-                    continuation.resume(throwing: PlacesSearchError.serviceUnavailable("地点情報を取得できませんでした。"))
-                    return
-                }
-                let details = PlaceDetails(
-                    id: place.placeID ?? placeId,
-                    name: place.name ?? "",
-                    latitude: place.coordinate.latitude,
-                    longitude: place.coordinate.longitude,
-                    formattedAddress: place.formattedAddress
-                )
-                continuation.resume(returning: details)
-            }
-        }
+        _ = session // Text Searchではセッションを利用しない
+        return try await fetchPlaceDetails(placeId: placeId)
     }
 
     func fetchPlaceDetails(placeId: String) async throws -> PlaceDetails {
