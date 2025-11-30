@@ -9,14 +9,7 @@ import Combine
 struct PlaceSearchViewModelTests {
     @Test("search, select, and save place")
     func searchSelectAndSavePlace() async throws {
-        let session = PlacesAutocompleteSession(identifier: NSObject())
-        let prediction = PlaceAutocompletePrediction(
-            id: "test-place-id",
-            primaryText: "テスト店舗",
-            secondaryText: "東京都千代田区",
-            distanceMeters: 12.0
-        )
-        let response = PlacesAutocompleteResponse(session: session, predictions: [prediction])
+        let session = PlacesSearchSession(identifier: NSObject())
         let details = PlaceDetails(
             id: "test-place-id",
             name: "テスト店舗",
@@ -24,9 +17,10 @@ struct PlaceSearchViewModelTests {
             longitude: 139.0,
             formattedAddress: "東京都千代田区1-1"
         )
+        let response = PlacesSearchResponse(session: session, places: [details])
 
         let stubService = StubPlacesSearchService()
-        stubService.autocompleteResult = .success(response)
+        stubService.searchResult = .success(response)
         stubService.detailsResult = .success(details)
 
         let repository = InMemoryPlacesRepository()
@@ -46,7 +40,7 @@ struct PlaceSearchViewModelTests {
 
         viewModel.query = "テスト"
         await viewModel.performSearch()
-        #expect(viewModel.predictions.count == 1)
+        #expect(viewModel.places.count == 1)
         #expect(stubService.receivedSessions.count == 1)
         if let firstEntry = stubService.receivedSessions.first {
             #expect(firstEntry == nil)
@@ -54,7 +48,7 @@ struct PlaceSearchViewModelTests {
             Issue.record("セッションが記録されていません")
         }
 
-        await viewModel.selectPrediction(prediction)
+        await viewModel.selectPlace(details)
         #expect(viewModel.displayText == "テスト店舗")
         #expect(viewModel.searchErrorMessage == nil)
         #expect(viewModel.isSearchRetryable == false)
@@ -69,7 +63,7 @@ struct PlaceSearchViewModelTests {
     @Test("missing selection shows error")
     func missingSelectionShowsError() async {
         let stubService = StubPlacesSearchService()
-        stubService.autocompleteResult = .failure(PlacesSearchError.serviceUnavailable("キー未設定"))
+        stubService.searchResult = .failure(PlacesSearchError.serviceUnavailable("キー未設定"))
 
         let repository = InMemoryPlacesRepository()
         let useCase = CreatePlaceUseCase(placesRepository: repository)
@@ -88,7 +82,7 @@ struct PlaceSearchViewModelTests {
 
         viewModel.query = "テスト"
         await viewModel.performSearch()
-        #expect(viewModel.predictions.isEmpty)
+        #expect(viewModel.places.isEmpty)
         #expect(viewModel.searchErrorMessage == "キー未設定")
         #expect(viewModel.isSearchRetryable)
 
@@ -124,21 +118,19 @@ struct PlaceSearchViewModelTests {
         #expect(viewModel.displayText == "東京都千代田区")
     }
 
-    @Test("autocomplete session is reused when refining query")
-    func autocompleteSessionIsReusedWhenQueryIsRefined() async {
-        let firstSessionToken = NSObject()
-        let firstSession = PlacesAutocompleteSession(identifier: firstSessionToken)
-        let secondSession = PlacesAutocompleteSession(identifier: NSObject())
-        let prediction = PlaceAutocompletePrediction(
+    @Test("text search does not rely on session reuse")
+    func textSearchDoesNotRelyOnSessionReuse() async {
+        let place = PlaceDetails(
             id: "prediction",
-            primaryText: "テスト",
-            secondaryText: nil,
-            distanceMeters: nil
+            name: "テスト",
+            latitude: 0.0,
+            longitude: 0.0,
+            formattedAddress: "東京都",
         )
 
         let stubService = StubPlacesSearchService()
-        stubService.enqueueAutocompleteResult(.success(PlacesAutocompleteResponse(session: firstSession, predictions: [prediction])))
-        stubService.enqueueAutocompleteResult(.success(PlacesAutocompleteResponse(session: secondSession, predictions: [prediction])))
+        stubService.enqueueSearchResult(.success(PlacesSearchResponse(session: PlacesSearchSession(identifier: NSObject()), places: [place])))
+        stubService.enqueueSearchResult(.success(PlacesSearchResponse(session: PlacesSearchSession(identifier: NSObject()), places: [place])))
 
         let repository = InMemoryPlacesRepository()
         let useCase = CreatePlaceUseCase(placesRepository: repository)
@@ -162,26 +154,13 @@ struct PlaceSearchViewModelTests {
         await viewModel.performSearch()
 
         #expect(stubService.receivedSessions.count == 2)
-        if let firstEntry = stubService.receivedSessions.first {
-            #expect(firstEntry == nil)
-        } else {
-            Issue.record("1回目のセッションが記録されていません")
-        }
-        guard let secondEntry = stubService.receivedSessions.last else {
-            Issue.record("2回目のセッションが不足しています")
-            return
-        }
-        guard let reusedSession = secondEntry else {
-            Issue.record("2回目のセッションがnilです")
-            return
-        }
-        #expect((reusedSession.identifier as AnyObject) === firstSession.identifier as AnyObject)
+        #expect(stubService.receivedSessions.allSatisfy { $0 == nil })
     }
 
     @Test("quota exceeded error disables retry")
     func quotaExceededErrorStopsRetry() async {
         let stubService = StubPlacesSearchService()
-        stubService.autocompleteResult = .failure(PlacesSearchError.quotaExceeded("利用上限に達しました"))
+        stubService.searchResult = .failure(PlacesSearchError.quotaExceeded("利用上限に達しました"))
 
         let repository = InMemoryPlacesRepository()
         let useCase = CreatePlaceUseCase(placesRepository: repository)
@@ -209,8 +188,8 @@ struct PlaceSearchViewModelTests {
     @Test("offline search shows error immediately")
     func offlineSearchShowsErrorImmediately() async {
         let stubService = StubPlacesSearchService()
-        stubService.autocompleteResult = .success(
-            PlacesAutocompleteResponse(session: PlacesAutocompleteSession(identifier: NSObject()), predictions: [])
+        stubService.searchResult = .success(
+            PlacesSearchResponse(session: PlacesSearchSession(identifier: NSObject()), places: [])
         )
 
         let repository = InMemoryPlacesRepository()
@@ -287,6 +266,150 @@ struct PlaceSearchViewModelTests {
         #expect(viewModel.initialCameraCoordinate?.latitude == 35.6813)
         #expect(viewModel.initialCameraCoordinate?.longitude == 139.767066)
     }
+
+    @Test("search uses map center as origin")
+    func searchUsesMapCenterAsOrigin() async {
+        let session = PlacesSearchSession(identifier: NSObject())
+        let place = PlaceDetails(
+            id: "nearby",
+            name: "最寄り店",
+            latitude: 0.0,
+            longitude: 0.0,
+            formattedAddress: "東京都"
+        )
+        let response = PlacesSearchResponse(session: session, places: [place])
+
+        let stubService = StubPlacesSearchService()
+        stubService.searchResult = .success(response)
+
+        let repository = InMemoryPlacesRepository()
+        let useCase = CreatePlaceUseCase(placesRepository: repository)
+        let geocoder = StubGeocodingService()
+        let network = StubNetworkMonitor(isConnected: true)
+        let permission = StubLocationPermissionManager(status: .authorizedWhenInUse)
+        let locationProvider = StubCurrentLocationProvider(
+            result: .success(CLLocationCoordinate2D(latitude: 10.0, longitude: 20.0))
+        )
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
+
+        viewModel.mapCenterCoordinate = CLLocationCoordinate2D(latitude: 11.0, longitude: 22.0)
+        viewModel.query = "スーパー"
+        await viewModel.performSearch()
+
+        guard let recordedOrigin = stubService.receivedOrigins.first ?? nil else {
+            Issue.record("検索originが記録されていません")
+            return
+        }
+        #expect(recordedOrigin.latitude == 11.0)
+        #expect(recordedOrigin.longitude == 22.0)
+    }
+
+    @Test("search uses latest map center after move")
+    func searchUsesLatestMapCenterAfterMove() async {
+        let firstSession = PlacesSearchSession(identifier: NSObject())
+        let secondSession = PlacesSearchSession(identifier: NSObject())
+        let place = PlaceDetails(
+            id: "move",
+            name: "移動後",
+            latitude: 0.0,
+            longitude: 0.0,
+            formattedAddress: "東京都"
+        )
+
+        let stubService = StubPlacesSearchService()
+        stubService.enqueueSearchResult(.success(PlacesSearchResponse(session: firstSession, places: [place])))
+        stubService.enqueueSearchResult(.success(PlacesSearchResponse(session: secondSession, places: [place])))
+
+        let repository = InMemoryPlacesRepository()
+        let useCase = CreatePlaceUseCase(placesRepository: repository)
+        let geocoder = StubGeocodingService()
+        let network = StubNetworkMonitor(isConnected: true)
+        let permission = StubLocationPermissionManager(status: .authorizedWhenInUse)
+        let locationProvider = StubCurrentLocationProvider(
+            result: .success(CLLocationCoordinate2D(latitude: 33.0, longitude: 44.0))
+        )
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
+
+        viewModel.mapCenterCoordinate = CLLocationCoordinate2D(latitude: 1.0, longitude: 2.0)
+        viewModel.query = "スーパー"
+        await viewModel.performSearch()
+
+        viewModel.updateMapCenter(CLLocationCoordinate2D(latitude: 5.0, longitude: 6.0))
+        viewModel.query = "スーパー2"
+        await viewModel.performSearch()
+
+        #expect(stubService.receivedOrigins.count == 2)
+        guard let firstOrigin = stubService.receivedOrigins.first ?? nil else {
+            Issue.record("1回目のoriginが記録されていません")
+            return
+        }
+        guard let lastOrigin = stubService.receivedOrigins.last ?? nil else {
+            Issue.record("2回目のoriginが記録されていません")
+            return
+        }
+        #expect(firstOrigin.latitude == 1.0)
+        #expect(firstOrigin.longitude == 2.0)
+        #expect(lastOrigin.latitude == 5.0)
+        #expect(lastOrigin.longitude == 6.0)
+    }
+
+    @Test("search falls back to initial camera when location unavailable")
+    func searchFallsBackToInitialCameraWhenLocationUnavailable() async {
+        let session = PlacesSearchSession(identifier: NSObject())
+        let place = PlaceDetails(
+            id: "fallback",
+            name: "フォールバック店",
+            latitude: 0.0,
+            longitude: 0.0,
+            formattedAddress: "東京都"
+        )
+        let response = PlacesSearchResponse(session: session, places: [place])
+
+        let stubService = StubPlacesSearchService()
+        stubService.searchResult = .success(response)
+
+        let repository = InMemoryPlacesRepository()
+        let useCase = CreatePlaceUseCase(placesRepository: repository)
+        let geocoder = StubGeocodingService()
+        let network = StubNetworkMonitor(isConnected: true)
+        let permission = StubLocationPermissionManager(status: .denied)
+        let locationProvider = StubCurrentLocationProvider(
+            result: .failure(StubLocationError.noLocation)
+        )
+        let viewModel = PlaceSearchViewModel(
+            placesSearchService: stubService,
+            createPlaceUseCase: useCase,
+            geocodingService: geocoder,
+            networkProvider: network,
+            locationPermissionManager: permission,
+            locationProvider: locationProvider
+        )
+
+        viewModel.query = "コンビニ"
+        await viewModel.performSearch()
+
+        guard let recordedOrigin = stubService.receivedOrigins.first ?? nil else {
+            Issue.record("フォールバックoriginが記録されていません")
+            return
+        }
+        #expect(recordedOrigin.latitude == PlaceSearchViewModel.fallbackCoordinate.latitude)
+        #expect(recordedOrigin.longitude == PlaceSearchViewModel.fallbackCoordinate.longitude)
+    }
+
 }
 
 private final class StubNetworkMonitor: NetworkStatusProviding {

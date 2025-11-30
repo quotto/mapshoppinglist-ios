@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 
 /// APIキー未設定時などに利用するダミー実装。
 struct UnavailablePlacesSearchService: PlacesSearchService {
@@ -8,11 +9,11 @@ struct UnavailablePlacesSearchService: PlacesSearchService {
         self.reason = reason
     }
 
-    func autocomplete(query: String, session: PlacesAutocompleteSession?) async throws -> PlacesAutocompleteResponse {
+    func search(query: String, session: PlacesSearchSession?, origin: CLLocationCoordinate2D?) async throws -> PlacesSearchResponse {
         throw PlacesSearchError.serviceUnavailable(reason)
     }
 
-    func fetchPlaceDetails(placeId: String, session: PlacesAutocompleteSession) async throws -> PlaceDetails {
+    func fetchPlaceDetails(placeId: String, session: PlacesSearchSession) async throws -> PlaceDetails {
         throw PlacesSearchError.serviceUnavailable(reason)
     }
 

@@ -6,7 +6,7 @@ import GooglePlaces
 @MainActor
 final class PlaceSearchViewModel: ObservableObject {
     @Published var query: String = ""
-    @Published var predictions: [PlaceAutocompletePrediction] = []
+    @Published var places: [PlaceDetails] = []
     @Published var isPredictionListVisible = false
     @Published var isSearching = false
     @Published var isLoadingDetails = false
@@ -20,6 +20,7 @@ final class PlaceSearchViewModel: ObservableObject {
     @Published var formErrorMessage: String?
     @Published var isOffline: Bool = false
     @Published var initialCameraCoordinate: CLLocationCoordinate2D?
+    @Published var mapCenterCoordinate: CLLocationCoordinate2D?
 
     private let placesSearchService: PlacesSearchService
     private let createPlaceUseCase: CreatePlaceUseCase
@@ -28,8 +29,6 @@ final class PlaceSearchViewModel: ObservableObject {
     private let locationPermissionManager: LocationPermissionManager
     private let locationProvider: CurrentLocationProviding
     private var cancellable: AnyCancellable?
-    private var currentSession: PlacesAutocompleteSession?
-    private var lastQuery: String?
     private var didLoadInitialCamera = false
 
     private var selectedName: String?
@@ -72,12 +71,10 @@ final class PlaceSearchViewModel: ObservableObject {
     func performSearch() async {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.isEmpty == false else {
-            predictions = []
+            places = []
             isPredictionListVisible = false
-            currentSession = nil
             searchErrorMessage = nil
             isSearchRetryable = false
-            lastQuery = nil
             return
         }
         guard isOffline == false else {
@@ -89,22 +86,18 @@ final class PlaceSearchViewModel: ObservableObject {
         searchErrorMessage = nil
         isSearchRetryable = false
         do {
-            let reuseSession = (
-                currentSession != nil &&
-                (lastQuery.map { trimmed.hasPrefix($0) } ?? false)
-            )
-            let response = try await placesSearchService.autocomplete(
+            let origin = await resolveSearchOrigin()
+            let response = try await placesSearchService.search(
                 query: trimmed,
-                session: reuseSession ? currentSession : nil
+                session: nil,
+                origin: origin
             )
-            currentSession = response.session
-            predictions = response.predictions
-            isPredictionListVisible = response.predictions.isEmpty == false
-            if response.predictions.isEmpty {
+            places = response.places
+            isPredictionListVisible = response.places.isEmpty == false
+            if response.places.isEmpty {
                 searchErrorMessage = "候補が見つかりませんでした。条件を変えて検索してください。"
                 isSearchRetryable = false
             }
-            lastQuery = trimmed
         } catch let error as PlacesSearchError {
             handleSearchError(error)
         } catch {
@@ -114,11 +107,7 @@ final class PlaceSearchViewModel: ObservableObject {
         isSearching = false
     }
 
-    func selectPrediction(_ prediction: PlaceAutocompletePrediction) async {
-        guard let session = currentSession else {
-            searchErrorMessage = "検索セッションが無効です。もう一度検索してください。"
-            return
-        }
+    func selectPlace(_ place: PlaceDetails) async {
         isPredictionListVisible = false
         isLoadingDetails = true
         searchErrorMessage = nil
@@ -131,10 +120,8 @@ final class PlaceSearchViewModel: ObservableObject {
             return
         }
         do {
-            let details = try await placesSearchService.fetchPlaceDetails(placeId: prediction.id, session: session)
+            let details = try await placesSearchService.fetchPlaceDetails(placeId: place.id)
             apply(details: details)
-            currentSession = nil
-            lastQuery = nil
         } catch let error as PlacesSearchError {
             searchErrorMessage = error.errorDescription
             isSearchRetryable = error.isRetryable
@@ -161,8 +148,6 @@ final class PlaceSearchViewModel: ObservableObject {
         do {
             let details = try await placesSearchService.fetchPlaceDetails(placeId: placeID)
             apply(details: details)
-            currentSession = nil
-            lastQuery = nil
         } catch let error as PlacesSearchError {
             searchErrorMessage = error.errorDescription
             isSearchRetryable = error.isRetryable
@@ -180,8 +165,7 @@ final class PlaceSearchViewModel: ObservableObject {
         selectedAddress = nil
         displayText = nil
         isPredictionListVisible = false
-        currentSession = nil
-        predictions = []
+        places = []
         searchErrorMessage = nil
         isSearchRetryable = false
         geocodeErrorMessage = nil
@@ -227,9 +211,8 @@ final class PlaceSearchViewModel: ObservableObject {
         selectedName = nil
         selectedAddress = nil
         displayText = nil
-        predictions = []
+        places = []
         isPredictionListVisible = false
-        currentSession = nil
         searchErrorMessage = nil
         isSearchRetryable = false
         geocodeErrorMessage = nil
@@ -243,16 +226,23 @@ final class PlaceSearchViewModel: ObservableObject {
         let status = locationPermissionManager.authorizationStatus()
         guard status.isAuthorized else {
             initialCameraCoordinate = Self.fallbackCoordinate
+            mapCenterCoordinate = Self.fallbackCoordinate
             return
         }
 
         do {
             let coordinate = try await locationProvider.currentLocation()
             initialCameraCoordinate = coordinate
+            mapCenterCoordinate = coordinate
         } catch {
             // 現在地が取得できない場合は東京駅でフォールバックする
             initialCameraCoordinate = Self.fallbackCoordinate
+            mapCenterCoordinate = Self.fallbackCoordinate
         }
+    }
+
+    func updateMapCenter(_ coordinate: CLLocationCoordinate2D) {
+        mapCenterCoordinate = coordinate
     }
 
     private func apply(details: PlaceDetails) {
@@ -267,17 +257,34 @@ final class PlaceSearchViewModel: ObservableObject {
     private func handleSearchError(_ error: PlacesSearchError) {
         searchErrorMessage = error.errorDescription ?? "地点検索に失敗しました。"
         isSearchRetryable = error.isRetryable
-        predictions = []
+        places = []
         isPredictionListVisible = false
-        if error.isRetryable == false {
-            currentSession = nil
-        }
-        lastQuery = nil
     }
 
     private static func toE6(_ value: Double) -> Int {
         Int((value * 1_000_000).rounded())
     }
+
+    /// 検索時の基準点となる座標を解決する。
+    /// 優先順位: 1. 地図の中心座標, 2. 初期カメラ座標（位置情報または東京駅のフォールバック）
+    /// - Returns: 基準となる座標。取得できない場合は nil。
+    private func resolveSearchOrigin() async -> CLLocationCoordinate2D? {
+        if let mapCenterCoordinate {
+            return mapCenterCoordinate
+        }
+
+        // 地図中心が未取得の場合でも初期カメラ座標をフォールバックとして用いる
+        if didLoadInitialCamera == false {
+            await loadInitialCameraIfNeeded()
+        }
+
+        if let mapCenterCoordinate {
+            return mapCenterCoordinate
+        }
+
+        return initialCameraCoordinate
+    }
+
 
     private func reverseGeocodeIfNeeded(for coordinate: CLLocationCoordinate2D) async {
         isGeocoding = true

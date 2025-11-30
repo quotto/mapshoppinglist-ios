@@ -1,38 +1,35 @@
 import Foundation
+import CoreLocation
 
 /// Place検索APIの共通インタフェース。
 protocol PlacesSearchService {
-    /// オートコンプリート検索を実行する。
-    func autocomplete(query: String, session: PlacesAutocompleteSession?) async throws -> PlacesAutocompleteResponse
+    /// テキスト検索を実行する。
+    func search(
+        query: String,
+        session: PlacesSearchSession?,
+        origin: CLLocationCoordinate2D?
+    ) async throws -> PlacesSearchResponse
 
     /// 指定したプレイスIDの詳細を取得する。
-    func fetchPlaceDetails(placeId: String, session: PlacesAutocompleteSession) async throws -> PlaceDetails
+    func fetchPlaceDetails(placeId: String, session: PlacesSearchSession) async throws -> PlaceDetails
 
     /// セッション不要のプレイス詳細取得。
     func fetchPlaceDetails(placeId: String) async throws -> PlaceDetails
 }
 
-/// オートコンプリート検索の結果。
-struct PlacesAutocompleteResponse {
-    let session: PlacesAutocompleteSession
-    let predictions: [PlaceAutocompletePrediction]
+/// テキスト検索の結果。
+struct PlacesSearchResponse {
+    let session: PlacesSearchSession
+    let places: [PlaceDetails]
 }
 
-/// オートコンプリート用のセッション。
-struct PlacesAutocompleteSession {
+/// テキスト検索用のセッション。
+struct PlacesSearchSession {
     let identifier: AnyObject
 }
 
-/// オートコンプリート候補。
-struct PlaceAutocompletePrediction: Identifiable, Equatable {
-    let id: String
-    let primaryText: String
-    let secondaryText: String?
-    let distanceMeters: Double?
-}
-
 /// プレイス詳細。
-struct PlaceDetails: Equatable {
+struct PlaceDetails: Identifiable, Equatable {
     let id: String
     let name: String
     let latitude: Double
@@ -85,7 +82,8 @@ enum PlacesSearchError: LocalizedError {
 }
 
 extension PlacesSearchService {
-    func autocomplete(query: String) async throws -> PlacesAutocompleteResponse {
-        try await autocomplete(query: query, session: nil)
+    /// セッションや原点を意識せずにテキスト検索を実行するための簡易ヘルパー。
+    func search(query: String) async throws -> PlacesSearchResponse {
+        try await search(query: query, session: nil, origin: nil)
     }
 }

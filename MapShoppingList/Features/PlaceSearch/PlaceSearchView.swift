@@ -42,6 +42,9 @@ struct PlaceSearchView: View {
                 },
                 onPOITapped: { placeID, _, _ in
                     Task { await viewModel.selectPlace(by: placeID) }
+                },
+                onCameraIdle: { center in
+                    viewModel.updateMapCenter(center)
                 }
             )
             .cornerRadius(12)
@@ -123,14 +126,14 @@ struct PlaceSearchView: View {
 
     private var predictionsOverlay: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(viewModel.predictions) { prediction in
+            ForEach(viewModel.places) { place in
                 Button {
-                    Task { await viewModel.selectPrediction(prediction) }
+                    Task { await viewModel.selectPlace(place) }
                 } label: {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(prediction.primaryText)
+                        Text(place.name)
                             .font(.headline)
-                        if let secondary = prediction.secondaryText {
+                        if let secondary = place.formattedAddress {
                             Text(secondary)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
@@ -142,7 +145,7 @@ struct PlaceSearchView: View {
                 }
                 .buttonStyle(.plain)
 
-                if prediction.id != viewModel.predictions.last?.id {
+                if place.id != viewModel.places.last?.id {
                     Divider()
                 }
             }

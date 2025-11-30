@@ -183,9 +183,7 @@ final class PlaceManagementUITests: BaseUITestCase {
         let reopenedRenameField = app.textFields[UITestIdentifiers.PlaceManagement.renameTextField]
         assertExists(reopenedRenameField, in: app)
         let currentValue = reopenedRenameField.value as? String
-        XCTExpectFailure("S6の名称変更結果がUIに反映されない既知の問題") {
-            XCTAssertEqual(currentValue, "テストスーパーA リニューアル")
-        }
+        XCTAssertEqual(currentValue, "テストスーパーA リニューアル")
 
         app.buttons["キャンセル"].tap()
     }
@@ -257,5 +255,19 @@ final class PlaceSearchUITests: BaseUITestCase {
         XCTAssertTrue(exists, "地点検索シートのテキストフィールドが表示されませんでした")
 
         XCTAssertFalse(app.navigationBars["地点を検索"].waitForExistence(timeout: 1))
+    }
+
+    func testPlaceSearchOpensWhenLocationDenied() {
+        let app = launchApp(locationStatus: UITestLocationStatusValue.denied)
+        let addButton = app.buttons[UITestIdentifiers.Home.fabAddItem]
+        assertExists(addButton, in: app)
+        addButton.tap()
+
+        let searchButton = app.buttons["Googleで地点を検索"]
+        assertExists(searchButton, in: app)
+        searchButton.tap()
+
+        let queryField = app.textFields["店名や施設名を入力"]
+        assertExists(queryField, in: app)
     }
 }
