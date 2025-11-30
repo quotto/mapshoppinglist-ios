@@ -166,7 +166,6 @@ final class PlaceSearchViewModel: ObservableObject {
 
     func updateCoordinateFromMap(_ coordinate: CLLocationCoordinate2D) {
         selectedCoordinate = coordinate
-        mapCenterCoordinate = coordinate
         selectedName = nil
         selectedAddress = nil
         displayText = nil

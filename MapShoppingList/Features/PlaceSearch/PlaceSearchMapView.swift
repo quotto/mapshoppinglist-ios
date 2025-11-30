@@ -51,7 +51,10 @@ struct PlaceSearchMapView: UIViewRepresentable {
         }
         context.coordinator.lastInitialCenter = initial
         // 初期表示時にも中心座標を通知して検索基点に利用できるようにする
-        onCameraIdle(mapView.camera.target)
+        DispatchQueue.main.async { [weak mapView] in
+            guard let mapView = mapView else { return }
+            onCameraIdle(mapView.camera.target)
+        }
         return mapView
     }
 
