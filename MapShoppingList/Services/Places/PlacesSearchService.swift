@@ -82,7 +82,8 @@ enum PlacesSearchError: LocalizedError {
 }
 
 extension PlacesSearchService {
-    func autocomplete(query: String) async throws -> PlacesSearchResponse {
+    /// セッションや原点を意識せずにテキスト検索を実行するための簡易ヘルパー。
+    func search(query: String) async throws -> PlacesSearchResponse {
         try await search(query: query, session: nil, origin: nil)
     }
 }

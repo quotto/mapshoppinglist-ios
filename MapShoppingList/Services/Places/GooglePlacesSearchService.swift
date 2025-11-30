@@ -4,6 +4,7 @@ import GooglePlaces
 
 /// Google Places SDK を利用した検索サービス実装。
 final class GooglePlacesSearchService: PlacesSearchService {
+    private static let maxSearchResults = 10
     private let client: GMSPlacesClient
 
     init(client: GMSPlacesClient) {
@@ -21,7 +22,7 @@ final class GooglePlacesSearchService: PlacesSearchService {
             let request = GMSPlaceSearchByTextRequest(textQuery: query, placeProperties: myProperties)
             request.isOpenNow = false
             request.rankPreference = .distance
-            request.maxResultCount = 10
+            request.maxResultCount = Int32(Self.maxSearchResults)
             if let origin {
                 request.locationBias = GMSPlaceCircularLocationOption(CLLocationCoordinate2DMake(origin.latitude, origin.longitude), 5000.0)
             }

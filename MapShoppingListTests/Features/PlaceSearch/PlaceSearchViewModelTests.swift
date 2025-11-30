@@ -303,9 +303,12 @@ struct PlaceSearchViewModelTests {
         viewModel.query = "スーパー"
         await viewModel.performSearch()
 
-        let recordedOrigin = stubService.receivedOrigins.first ?? nil
-        #expect(recordedOrigin?.latitude == 11.0)
-        #expect(recordedOrigin?.longitude == 22.0)
+        guard let recordedOrigin = stubService.receivedOrigins.first ?? nil else {
+            Issue.record("検索originが記録されていません")
+            return
+        }
+        #expect(recordedOrigin.latitude == 11.0)
+        #expect(recordedOrigin.longitude == 22.0)
     }
 
     @Test("search uses latest map center after move")
@@ -350,12 +353,18 @@ struct PlaceSearchViewModelTests {
         await viewModel.performSearch()
 
         #expect(stubService.receivedOrigins.count == 2)
-        let firstOrigin = stubService.receivedOrigins.first ?? nil
-        let lastOrigin = stubService.receivedOrigins.last ?? nil
-        #expect(firstOrigin?.latitude == 1.0)
-        #expect(firstOrigin?.longitude == 2.0)
-        #expect(lastOrigin?.latitude == 5.0)
-        #expect(lastOrigin?.longitude == 6.0)
+        guard let firstOrigin = stubService.receivedOrigins.first ?? nil else {
+            Issue.record("1回目のoriginが記録されていません")
+            return
+        }
+        guard let lastOrigin = stubService.receivedOrigins.last ?? nil else {
+            Issue.record("2回目のoriginが記録されていません")
+            return
+        }
+        #expect(firstOrigin.latitude == 1.0)
+        #expect(firstOrigin.longitude == 2.0)
+        #expect(lastOrigin.latitude == 5.0)
+        #expect(lastOrigin.longitude == 6.0)
     }
 
     @Test("search falls back to initial camera when location unavailable")
@@ -393,9 +402,12 @@ struct PlaceSearchViewModelTests {
         viewModel.query = "コンビニ"
         await viewModel.performSearch()
 
-        let recordedOrigin = stubService.receivedOrigins.first ?? nil
-        #expect(recordedOrigin?.latitude == PlaceSearchViewModel.fallbackCoordinate.latitude)
-        #expect(recordedOrigin?.longitude == PlaceSearchViewModel.fallbackCoordinate.longitude)
+        guard let recordedOrigin = stubService.receivedOrigins.first ?? nil else {
+            Issue.record("フォールバックoriginが記録されていません")
+            return
+        }
+        #expect(recordedOrigin.latitude == PlaceSearchViewModel.fallbackCoordinate.latitude)
+        #expect(recordedOrigin.longitude == PlaceSearchViewModel.fallbackCoordinate.longitude)
     }
 
 }

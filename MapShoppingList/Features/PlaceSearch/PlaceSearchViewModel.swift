@@ -29,7 +29,6 @@ final class PlaceSearchViewModel: ObservableObject {
     private let locationPermissionManager: LocationPermissionManager
     private let locationProvider: CurrentLocationProviding
     private var cancellable: AnyCancellable?
-    private var currentSession: PlacesSearchSession?
     private var didLoadInitialCamera = false
 
     private var selectedName: String?
@@ -74,7 +73,6 @@ final class PlaceSearchViewModel: ObservableObject {
         guard trimmed.isEmpty == false else {
             places = []
             isPredictionListVisible = false
-            currentSession = nil
             searchErrorMessage = nil
             isSearchRetryable = false
             return
@@ -94,7 +92,6 @@ final class PlaceSearchViewModel: ObservableObject {
                 session: nil,
                 origin: origin
             )
-            currentSession = nil
             places = response.places
             isPredictionListVisible = response.places.isEmpty == false
             if response.places.isEmpty {
@@ -125,7 +122,6 @@ final class PlaceSearchViewModel: ObservableObject {
         do {
             let details = try await placesSearchService.fetchPlaceDetails(placeId: place.id)
             apply(details: details)
-            currentSession = nil
         } catch let error as PlacesSearchError {
             searchErrorMessage = error.errorDescription
             isSearchRetryable = error.isRetryable
@@ -152,7 +148,6 @@ final class PlaceSearchViewModel: ObservableObject {
         do {
             let details = try await placesSearchService.fetchPlaceDetails(placeId: placeID)
             apply(details: details)
-            currentSession = nil
         } catch let error as PlacesSearchError {
             searchErrorMessage = error.errorDescription
             isSearchRetryable = error.isRetryable
@@ -170,7 +165,6 @@ final class PlaceSearchViewModel: ObservableObject {
         selectedAddress = nil
         displayText = nil
         isPredictionListVisible = false
-        currentSession = nil
         places = []
         searchErrorMessage = nil
         isSearchRetryable = false
@@ -219,7 +213,6 @@ final class PlaceSearchViewModel: ObservableObject {
         displayText = nil
         places = []
         isPredictionListVisible = false
-        currentSession = nil
         searchErrorMessage = nil
         isSearchRetryable = false
         geocodeErrorMessage = nil
@@ -266,15 +259,15 @@ final class PlaceSearchViewModel: ObservableObject {
         isSearchRetryable = error.isRetryable
         places = []
         isPredictionListVisible = false
-        if error.isRetryable == false {
-            currentSession = nil
-        }
     }
 
     private static func toE6(_ value: Double) -> Int {
         Int((value * 1_000_000).rounded())
     }
 
+    /// 検索時の基準点となる座標を解決する。
+    /// 優先順位: 1. 地図の中心座標, 2. 初期カメラ座標（位置情報または東京駅のフォールバック）
+    /// - Returns: 基準となる座標。取得できない場合は nil。
     private func resolveSearchOrigin() async -> CLLocationCoordinate2D? {
         if let mapCenterCoordinate {
             return mapCenterCoordinate
