@@ -17,13 +17,13 @@ final class GooglePlacesSearchService: PlacesSearchService {
     ) async throws -> PlacesSearchResponse {
         _ = session // Text Searchではセッションを利用しない
         let places: [PlaceDetails] = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[PlaceDetails], Error>) in
-            let myProperties = [GMSPlaceProperty.name, GMSPlaceProperty.placeID, GMSPlaceProperty.formattedAddress].map {$0.rawValue}
-            let request = GMSPlaceSearchByTextRequest(textQuery:query, placeProperties:myProperties)
+            let myProperties = [GMSPlaceProperty.name, GMSPlaceProperty.placeID, GMSPlaceProperty.coordinate, GMSPlaceProperty.formattedAddress].map { $0.rawValue }
+            let request = GMSPlaceSearchByTextRequest(textQuery: query, placeProperties: myProperties)
             request.isOpenNow = false
             request.rankPreference = .distance
             request.maxResultCount = 10
             if let origin {
-                request.locationBias =  GMSPlaceCircularLocationOption(CLLocationCoordinate2DMake(origin.latitude, origin.longitude), 5000.0)
+                request.locationBias = GMSPlaceCircularLocationOption(CLLocationCoordinate2DMake(origin.latitude, origin.longitude), 5000.0)
             }
             client.searchByText(with: request) { results, error in
                 if let error = error as NSError? {
@@ -31,7 +31,7 @@ final class GooglePlacesSearchService: PlacesSearchService {
                     return
                 }
                 let mapped = results?.map { result in
-                    PlaceDetails (
+                    PlaceDetails(
                         id: result.placeID ?? "",
                         name: result.name ?? "",
                         latitude: result.coordinate.latitude,

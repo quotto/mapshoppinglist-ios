@@ -398,56 +398,6 @@ struct PlaceSearchViewModelTests {
         #expect(recordedOrigin?.longitude == PlaceSearchViewModel.fallbackCoordinate.longitude)
     }
 
-//    @Test("predictions are sorted by distance when available")
-//    func predictionsAreSortedByDistance() async {
-//        let session = PlacesSearchSession(identifier: NSObject())
-//        let first = PlaceDetails(
-//            id: "far",
-//            name: "遠い店",
-//        )
-//        let second = PlaceAutocompletePrediction(
-//            id: "near",
-//            primaryText: "近い店",
-//            secondaryText: nil,
-//            distanceMeters: 50
-//        )
-//        let third = PlaceAutocompletePrediction(
-//            id: "unknown",
-//            primaryText: "距離不明",
-//            secondaryText: nil,
-//            distanceMeters: nil
-//        )
-//        let response = PlacesSearchResponse(
-//            session: session,
-//            predictions: [first, second, third]
-//        )
-//
-//        let stubService = StubPlacesSearchService()
-//        stubService.autocompleteResult = .success(response)
-//
-//        let repository = InMemoryPlacesRepository()
-//        let useCase = CreatePlaceUseCase(placesRepository: repository)
-//        let geocoder = StubGeocodingService()
-//        let network = StubNetworkMonitor(isConnected: true)
-//        let permission = StubLocationPermissionManager(status: .authorizedAlways)
-//        let locationProvider = StubCurrentLocationProvider(
-//            result: .success(CLLocationCoordinate2D(latitude: 1.0, longitude: 2.0))
-//        )
-//        let viewModel = PlaceSearchViewModel(
-//            placesSearchService: stubService,
-//            createPlaceUseCase: useCase,
-//            geocodingService: geocoder,
-//            networkProvider: network,
-//            locationPermissionManager: permission,
-//            locationProvider: locationProvider
-//        )
-//
-//        viewModel.query = "テスト"
-//        await viewModel.performSearch()
-//
-//        let ids = viewModel.places.map(\.id)
-//        #expect(ids == ["near", "far", "unknown"])
-//    }
 }
 
 private final class StubNetworkMonitor: NetworkStatusProviding {
