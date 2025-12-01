@@ -64,8 +64,7 @@ final class PlaceManagementViewModel: ObservableObject {
         newName = place.name
     }
 
-    func commitRename() async {
-        guard let target = renamingPlace else { return }
+    func commitRename(target: Row) async {
         do {
             try await updateNameUseCase.execute(placeId: target.id, newName: newName)
             renamingPlace = nil

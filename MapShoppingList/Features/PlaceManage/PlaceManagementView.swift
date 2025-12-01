@@ -43,12 +43,12 @@ struct PlaceManagementView: View {
                 .sheet(item: $viewModel.renamingPlace) { place in
                     if #available(iOS 18.0, *) {
                         RenamePlaceSheet(place: place, newName: $viewModel.newName) {
-                            Task { await viewModel.commitRename() }
+                            Task { await viewModel.commitRename(target: place) }
                         }
                         .presentationSizing(.page)
                     } else {
                         RenamePlaceSheet(place: place, newName: $viewModel.newName) {
-                            Task { await viewModel.commitRename() }
+                            Task { await viewModel.commitRename(target: place) }
                         }
                     }
                 }

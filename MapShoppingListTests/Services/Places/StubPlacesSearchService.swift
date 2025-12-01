@@ -1,39 +1,46 @@
 import Foundation
+import CoreLocation
 @testable import MapShoppingList
 
 final class StubPlacesSearchService: PlacesSearchService {
-    var autocompleteResult: Result<PlacesAutocompleteResponse, Error>? {
-        didSet { autocompleteResultsQueue.removeAll() }
+    var searchResult: Result<PlacesSearchResponse, Error>? {
+        didSet { searchResultQueue.removeAll() }
     }
     var detailsResult: Result<PlaceDetails, Error>? {
         didSet { detailsResultsQueue.removeAll() }
     }
-    private var autocompleteResultsQueue: [Result<PlacesAutocompleteResponse, Error>] = []
+    private var searchResultQueue: [Result<PlacesSearchResponse, Error>] = []
     private var detailsResultsQueue: [Result<PlaceDetails, Error>] = []
 
-    private(set) var receivedSessions: [PlacesAutocompleteSession?] = []
+    private(set) var receivedSessions: [PlacesSearchSession?] = []
+    private(set) var receivedOrigins: [CLLocationCoordinate2D?] = []
 
-    func enqueueAutocompleteResult(_ result: Result<PlacesAutocompleteResponse, Error>) {
-        autocompleteResultsQueue.append(result)
+    func enqueueSearchResult(_ result: Result<PlacesSearchResponse, Error>) {
+        searchResultQueue.append(result)
     }
 
     func enqueueDetailsResult(_ result: Result<PlaceDetails, Error>) {
         detailsResultsQueue.append(result)
     }
 
-    func autocomplete(query: String, session: PlacesAutocompleteSession?) async throws -> PlacesAutocompleteResponse {
+    func search(
+        query: String,
+        session: PlacesSearchSession?,
+        origin: CLLocationCoordinate2D?
+    ) async throws -> PlacesSearchResponse {
         receivedSessions.append(session)
-        if autocompleteResultsQueue.isEmpty == false {
-            let result = autocompleteResultsQueue.removeFirst()
+        receivedOrigins.append(origin)
+        if searchResultQueue.isEmpty == false {
+            let result = searchResultQueue.removeFirst()
             return try result.get()
         }
-        guard let result = autocompleteResult else {
-            fatalError("autocompleteResult が設定されていません")
+        guard let result = searchResult else {
+            fatalError("searchResult が設定されていません")
         }
         return try result.get()
     }
 
-    func fetchPlaceDetails(placeId: String, session: PlacesAutocompleteSession) async throws -> PlaceDetails {
+    func fetchPlaceDetails(placeId: String, session: PlacesSearchSession) async throws -> PlaceDetails {
         if detailsResultsQueue.isEmpty == false {
             let result = detailsResultsQueue.removeFirst()
             return try result.get()
