@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4BB19DD12ECB59ED007602D1 /* Config.secret.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */; };
 		4BB19DD22ECB59ED007602D1 /* Config.secret.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */; };
+
 		A6A4DDC5ADF7447DA426520D /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = DF1D5BD438B146A19B25138B /* GoogleMaps */; };
 		F402FB66CE16452E87A6EF6B /* GooglePlaces in Frameworks */ = {isa = PBXBuildFile; productRef = F80F050FDA744D41964D817A /* GooglePlaces */; };
 /* End PBXBuildFile section */
@@ -33,6 +34,7 @@
 /* Begin PBXFileReference section */
 		4B5C6A202EB116A5003D3B73 /* MapShoppingList.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MapShoppingList.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.secret.xcconfig; sourceTree = "<group>"; };
+
 		88F2E597BD7348A263AC1DFA /* MapShoppingListTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapShoppingListTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F9D0D8C72D9E3D9100A1E3A4 /* MapShoppingListUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapShoppingListUITests.swift; sourceTree = "<group>"; };
 		F9D0D8C82D9E3D9100A1E3A4 /* MapShoppingListUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapShoppingListUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -149,6 +151,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				4BE716DE2EDF28C7009739B2 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				4B5C6A222EB116A5003D3B73 /* MapShoppingList */,
@@ -216,6 +219,7 @@
 			packageReferences = (
 				2F84404B7A884554B1E87309 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */,
 				DDFDE30FFC9E4428A16E5F84 /* XCRemoteSwiftPackageReference "ios-places-sdk" */,
+				4B9CBE6D2EDE5C3100242AF6 /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4B5C6A212EB116A5003D3B73 /* Products */;
@@ -308,6 +312,10 @@
 			isa = PBXTargetDependency;
 			target = 4B5C6A1F2EB116A5003D3B73 /* MapShoppingList */;
 			targetProxy = 8A50E4C75993C41B1B0482A0 /* PBXContainerItemProxy */;
+		};
+		4BE716DE2EDF28C7009739B2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 4BE716DD2EDF28C7009739B2 /* SwiftLintBuildToolPlugin */;
 		};
 		F9D0D8D42D9E3D9100A1E3A4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -474,6 +482,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = MM4G8YRVBB;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "地図で買い物リスト";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
@@ -518,6 +527,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = MM4G8YRVBB;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "地図で買い物リスト";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
@@ -671,6 +681,14 @@
 				version = 9.4.0;
 			};
 		};
+		4B9CBE6D2EDE5C3100242AF6 /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SimplyDanny/SwiftLintPlugins";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.62.2;
+			};
+		};
 		DDFDE30FFC9E4428A16E5F84 /* XCRemoteSwiftPackageReference "ios-places-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/googlemaps/ios-places-sdk.git";
@@ -682,6 +700,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		4BE716DD2EDF28C7009739B2 /* SwiftLintBuildToolPlugin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4B9CBE6D2EDE5C3100242AF6 /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */;
+			productName = "plugin:SwiftLintBuildToolPlugin";
+		};
 		DF1D5BD438B146A19B25138B /* GoogleMaps */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 2F84404B7A884554B1E87309 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */;

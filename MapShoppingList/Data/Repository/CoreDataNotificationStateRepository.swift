@@ -35,7 +35,10 @@ final class CoreDataNotificationStateRepository: NotificationStateRepository {
             if let existing = try context.fetch(request).first {
                 object = existing
             } else {
-                guard let entity = NSEntityDescription.entity(forEntityName: ManagedKeys.NotifyState.entityName, in: context) else {
+                guard let entity = NSEntityDescription.entity(
+                    forEntityName: ManagedKeys.NotifyState.entityName,
+                    in: context
+                ) else {
                     fatalError("NotifyState entity missing")
                 }
                 object = NSManagedObject(entity: entity, insertInto: context)

@@ -53,7 +53,9 @@ final class DefaultLocationPermissionManager: NSObject, CLLocationManagerDelegat
 
 private extension DefaultLocationPermissionManager {
     static var supportsBackgroundLocation: Bool {
-        guard let modes = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] else { return false }
+        guard let modes = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] else {
+            return false
+        }
         return modes.contains("location")
     }
 }
@@ -88,7 +90,7 @@ final class DefaultCurrentLocationProvider: NSObject, CLLocationManagerDelegate,
             throw CurrentLocationError.unauthorized
         }
         guard continuation == nil else { throw CurrentLocationError.busy }
-        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CLLocationCoordinate2D, Error>) in
+        return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
             manager.requestLocation()
         }

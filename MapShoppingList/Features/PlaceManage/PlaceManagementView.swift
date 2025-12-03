@@ -29,7 +29,7 @@ struct PlaceManagementView: View {
                 }
                 .task { await viewModel.load() }
                 .alert("削除確認", isPresented: deleteAlertBinding) {
-                    Button("削除",role: .destructive) {
+                    Button("削除", role: .destructive) {
                         if let place = showDeleteAlert {
                             Task { await viewModel.delete(place: place) }
                         }
@@ -52,17 +52,21 @@ struct PlaceManagementView: View {
                         }
                     }
                 }
-                .sheet(isPresented: $showCreation, onDismiss: { Task { await viewModel.load() } }) {
-                    if #available(iOS 18.0, *) {
-                        PlaceCreationView(environment: environment)
-                            .presentationSizing(.page)
-                    } else {
-                        PlaceCreationView(environment: environment)
+                .sheet(
+                    isPresented: $showCreation,
+                    onDismiss: { Task { await viewModel.load() } },
+                    content: {
+                        if #available(iOS 18.0, *) {
+                            PlaceCreationView(environment: environment)
+                                .presentationSizing(.page)
+                        } else {
+                            PlaceCreationView(environment: environment)
+                        }
                     }
-                }
+                )
         }
     }
-    
+
     private var listContent: some View {
         List {
             ForEach(viewModel.places) { place in
@@ -73,7 +77,7 @@ struct PlaceManagementView: View {
             }
         }
     }
-    
+
     private func placeRow(for place: PlaceManagementViewModel.Row) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -113,7 +117,7 @@ struct PlaceManagementView: View {
         }
         .accessibilityIdentifier(UITestIdentifiers.PlaceManagement.rowPrefix + place.name)
     }
-    
+
     private var deleteAlertBinding: Binding<Bool> {
         Binding<Bool>(
             get: { showDeleteAlert != nil },
@@ -127,7 +131,7 @@ struct PlaceManagementView: View {
         formatter.timeStyle = .short
         return formatter.string(from: date)
     }
-    
+
     private var activeBadge: some View {
         Text("アクティブ")
             .font(.caption)

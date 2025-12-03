@@ -72,7 +72,9 @@ struct ContentView: View {
                                     }
                                 }
                             }
-                            if viewModel.pendingItems.isEmpty && viewModel.purchasedItems.isEmpty && viewModel.isLoading == false {
+                            if viewModel.pendingItems.isEmpty,
+                               viewModel.purchasedItems.isEmpty,
+                               viewModel.isLoading == false {
                                 Section {
                                     VStack(alignment: .center) {
                                         Image(systemName: "cart")
@@ -91,7 +93,8 @@ struct ContentView: View {
                         }
                     .overlay { ProgressView().opacity(viewModel.isLoading ? 1 : 0) }
                     .task {
-                        let shouldHandlePermissions = LaunchArguments.isUITesting == false && LaunchArguments.isRunningTests == false
+                        let shouldHandlePermissions = LaunchArguments.isUITesting == false
+                            && LaunchArguments.isRunningTests == false
                         if shouldHandlePermissions {
                             await permissionViewModel.refreshStatuses()
                             await permissionViewModel.requestLocationAuthorization()
@@ -100,7 +103,8 @@ struct ContentView: View {
                         await viewModel.load()
                     }
                     .onReceive(NotificationCenter.default.publisher(for: .geofenceNeedsSync)) { _ in
-                        guard LaunchArguments.isUITesting == false, LaunchArguments.isRunningTests == false else { return }
+                        guard LaunchArguments.isUITesting == false,
+                              LaunchArguments.isRunningTests == false else { return }
                         Task { await environment.geofenceCoordinator.syncActiveGeofences() }
                     }
                     .alert("エラー", isPresented: Binding<Bool>(
@@ -111,14 +115,18 @@ struct ContentView: View {
                     } message: {
                         Text(viewModel.errorMessage ?? "")
                     }
-                    .sheet(item: $editorConfig, onDismiss: { Task { await viewModel.load() } }) { config in
-                        if #available(iOS 18.0, *) {
-                            ItemEditorView(mode: config.mode, environment: environment)
-                                .presentationSizing(.page)
-                        } else {
-                            ItemEditorView(mode: config.mode, environment: environment)
+                    .sheet(
+                        item: $editorConfig,
+                        onDismiss: { Task { await viewModel.load() } },
+                        content: { config in
+                            if #available(iOS 18.0, *) {
+                                ItemEditorView(mode: config.mode, environment: environment)
+                                    .presentationSizing(.page)
+                            } else {
+                                ItemEditorView(mode: config.mode, environment: environment)
+                            }
                         }
-                    }
+                    )
                     .sheet(isPresented: $showPlaceManagement) {
                         if #available(iOS 18.0, *) {
                             PlaceManagementView(environment: environment)
@@ -143,7 +151,7 @@ struct ContentView: View {
                             OssLicensesView()
                         }
                     }
-                    
+
                     // フローティングアクションボタン
                     FloatingActionButton {
                         editorConfig = EditorConfig(mode: .create)
@@ -183,7 +191,7 @@ struct ContentView: View {
 /// フローティングアクションボタン（Android版と同様に右下配置）
 private struct FloatingActionButton: View {
     let action: () -> Void
-    
+
     var body: some View {
         Button {
             action()
@@ -207,7 +215,7 @@ private struct SlidingSidebarMenuView: View {
     @Binding var showPrivacyPolicy: Bool
     @Binding var showOssLicenses: Bool
     @Binding var isPresented: Bool
-    
+
     var body: some View {
         ZStack {
             // 背景のオーバーレイ（タップで閉じる）
@@ -221,7 +229,7 @@ private struct SlidingSidebarMenuView: View {
                     }
                     .transition(.opacity)
             }
-            
+
             // サイドバーメニュー
             HStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 0) {
@@ -243,9 +251,9 @@ private struct SlidingSidebarMenuView: View {
                     }
                     .padding()
                     .background(Color.appSurface)
-                    
+
                     Divider()
-                    
+
                     // メニュー項目
                     VStack(alignment: .leading, spacing: 0) {
                 MenuItemButton(
@@ -260,9 +268,9 @@ private struct SlidingSidebarMenuView: View {
                                 showPlaceManagement = true
                             }
                         }
-                        
+
                         Divider().padding(.leading, 56)
-                        
+
                 MenuItemButton(
                     icon: "lock.doc",
                     title: "プライバシーポリシー",
@@ -275,9 +283,9 @@ private struct SlidingSidebarMenuView: View {
                                 showPrivacyPolicy = true
                             }
                         }
-                        
+
                         Divider().padding(.leading, 56)
-                        
+
                 MenuItemButton(
                     icon: "doc.text",
                     title: "OSSライセンス",
@@ -290,7 +298,7 @@ private struct SlidingSidebarMenuView: View {
                                 showOssLicenses = true
                             }
                         }
-                        
+
                         Spacer()
                     }
                     .background(Color.appSurface)
@@ -298,7 +306,7 @@ private struct SlidingSidebarMenuView: View {
                 .frame(width: 280)
                 .background(Color.appSurface)
                 .offset(x: isPresented ? 0 : -280)
-                
+
                 Spacer()
             }
         }

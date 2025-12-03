@@ -53,7 +53,10 @@ final class CoreDataPlacesRepository: PlacesRepository {
 
     func createPlace(_ place: Place) async throws {
         try await performWrite { context in
-            guard let entity = NSEntityDescription.entity(forEntityName: ManagedKeys.Place.entityName, in: context) else {
+            guard let entity = NSEntityDescription.entity(
+                forEntityName: ManagedKeys.Place.entityName,
+                in: context
+            ) else {
                 fatalError("Place entity missing")
             }
             let object = NSManagedObject(entity: entity, insertInto: context)
@@ -112,7 +115,11 @@ final class CoreDataPlacesRepository: PlacesRepository {
             let longitudeE6 = place.value(forKey: ManagedKeys.Place.longitudeE6) as? Int,
             let isActive = place.value(forKey: ManagedKeys.Place.isActive) as? Bool
         else {
-            throw NSError(domain: "CoreDataPlacesRepository", code: 0, userInfo: [NSLocalizedDescriptionKey: "Place entity is invalid"])
+            throw NSError(
+                domain: "CoreDataPlacesRepository",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "Place entity is invalid"]
+            )
         }
         let note = place.value(forKey: ManagedKeys.Place.note) as? String
         let lastUsedAt = place.value(forKey: ManagedKeys.Place.lastUsedAt) as? Date

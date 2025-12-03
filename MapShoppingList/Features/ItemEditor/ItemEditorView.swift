@@ -112,12 +112,18 @@ struct ItemEditorView: View {
             }
             .sheet(isPresented: $showRecentPlaces) {
                 if #available(iOS 18.0, *) {
-                    RecentPlacesPickerView(environment: environment, initialSelection: viewModel.selectedPlaceIds) { selection in
+                    RecentPlacesPickerView(
+                        environment: environment,
+                        initialSelection: viewModel.selectedPlaceIds
+                    ) { selection in
                         viewModel.selectedPlaceIds = selection
                     }
                     .presentationSizing(.page)
                 } else {
-                    RecentPlacesPickerView(environment: environment, initialSelection: viewModel.selectedPlaceIds) { selection in
+                    RecentPlacesPickerView(
+                        environment: environment,
+                        initialSelection: viewModel.selectedPlaceIds
+                    ) { selection in
                         viewModel.selectedPlaceIds = selection
                     }
                 }

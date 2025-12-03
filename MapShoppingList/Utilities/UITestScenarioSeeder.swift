@@ -67,6 +67,8 @@ enum UITestScenarioSeeder {
     }
 
     @discardableResult
+    // テストデータ生成のため引数数が多いことを許容
+    // swiftlint:disable:next function_parameter_count
     private static func createPlace(
         context: NSManagedObjectContext,
         name: String,
@@ -76,8 +78,15 @@ enum UITestScenarioSeeder {
         lastUsedAt: Date?,
         isActive: Bool
     ) throws -> NSManagedObject {
-        guard let entity = NSEntityDescription.entity(forEntityName: ManagedKeys.Place.entityName, in: context) else {
-            throw NSError(domain: "UITestScenarioSeeder", code: 0, userInfo: [NSLocalizedDescriptionKey: "Place entity missing"])
+        guard let entity = NSEntityDescription.entity(
+            forEntityName: ManagedKeys.Place.entityName,
+            in: context
+        ) else {
+            throw NSError(
+                domain: "UITestScenarioSeeder",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "Place entity missing"]
+            )
         }
         let object = NSManagedObject(entity: entity, insertInto: context)
         object.setValue(UUID(), forKey: ManagedKeys.Place.id)

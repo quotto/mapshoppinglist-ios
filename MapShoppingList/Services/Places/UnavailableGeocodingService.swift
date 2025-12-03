@@ -12,4 +12,3 @@ struct UnavailableGeocodingService: GeocodingService {
         .failure(PlacesSearchError.serviceUnavailable(reason))
     }
 }
-

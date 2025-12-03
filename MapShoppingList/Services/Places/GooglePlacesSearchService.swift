@@ -17,14 +17,22 @@ final class GooglePlacesSearchService: PlacesSearchService {
         origin: CLLocationCoordinate2D?
     ) async throws -> PlacesSearchResponse {
         _ = session // Text Searchではセッションを利用しない
-        let places: [PlaceDetails] = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[PlaceDetails], Error>) in
-            let myProperties = [GMSPlaceProperty.name, GMSPlaceProperty.placeID, GMSPlaceProperty.coordinate, GMSPlaceProperty.formattedAddress].map { $0.rawValue }
+        let places: [PlaceDetails] = try await withCheckedThrowingContinuation { continuation in
+            let myProperties = [
+                GMSPlaceProperty.name,
+                GMSPlaceProperty.placeID,
+                GMSPlaceProperty.coordinate,
+                GMSPlaceProperty.formattedAddress
+            ].map { $0.rawValue }
             let request = GMSPlaceSearchByTextRequest(textQuery: query, placeProperties: myProperties)
             request.isOpenNow = false
             request.rankPreference = .distance
             request.maxResultCount = Int32(Self.maxSearchResults)
             if let origin {
-                request.locationBias = GMSPlaceCircularLocationOption(CLLocationCoordinate2DMake(origin.latitude, origin.longitude), 5000.0)
+                request.locationBias = GMSPlaceCircularLocationOption(
+                    CLLocationCoordinate2DMake(origin.latitude, origin.longitude),
+                    5000.0
+                )
             }
             client.searchByText(with: request) { results, error in
                 if let error = error as NSError? {
