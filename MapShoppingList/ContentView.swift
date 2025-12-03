@@ -28,69 +28,68 @@ struct ContentView: View {
     }
 
     var body: some View {
-            ZStack {
-                NavigationView {
-
-                    ZStack(alignment: .bottomTrailing) {
-                        List {
-                            if permissionViewModel.needsLocationPrompt || permissionViewModel.needsNotificationPrompt {
-                                PermissionPromptSection(viewModel: permissionViewModel)
-                            }
-                            if !viewModel.pendingItems.isEmpty {
-                                Section("未購入") {
-                                    ForEach(viewModel.pendingItems) { item in
-                                        ShoppingItemRowView(item: item) {
-                                            Task { await viewModel.togglePurchased(item: item) }
-                                        }
-                                        .swipeActions(edge: .trailing) {
-                                            Button(role: .destructive) {
-                                                Task { await viewModel.delete(item: item) }
-                                            } label: {
-                                                Label("削除", systemImage: "trash")
-                                            }
-                                        }
-                                        .contentShape(Rectangle())
-                                        .onTapGesture { editorConfig = EditorConfig(mode: .edit(item.id)) }
+        ZStack {
+            NavigationView {
+                ZStack(alignment: .bottomTrailing) {
+                    List {
+                        if permissionViewModel.needsLocationPrompt || permissionViewModel.needsNotificationPrompt {
+                            PermissionPromptSection(viewModel: permissionViewModel)
+                        }
+                        if !viewModel.pendingItems.isEmpty {
+                            Section("未購入") {
+                                ForEach(viewModel.pendingItems) { item in
+                                    ShoppingItemRowView(item: item) {
+                                        Task { await viewModel.togglePurchased(item: item) }
                                     }
-                                }
-                            }
-                            if !viewModel.purchasedItems.isEmpty {
-                                Section("購入済み") {
-                                    ForEach(viewModel.purchasedItems) { item in
-                                        ShoppingItemRowView(item: item) {
-                                            Task { await viewModel.togglePurchased(item: item) }
+                                    .swipeActions(edge: .trailing) {
+                                        Button(role: .destructive) {
+                                            Task { await viewModel.delete(item: item) }
+                                        } label: {
+                                            Label("削除", systemImage: "trash")
                                         }
-                                        .swipeActions(edge: .trailing) {
-                                            Button(role: .destructive) {
-                                                Task { await viewModel.delete(item: item) }
-                                            } label: {
-                                                Label("削除", systemImage: "trash")
-                                            }
-                                        }
-                                        .contentShape(Rectangle())
-                                        .onTapGesture { editorConfig = EditorConfig(mode: .edit(item.id)) }
                                     }
-                                }
-                            }
-                            if viewModel.pendingItems.isEmpty,
-                               viewModel.purchasedItems.isEmpty,
-                               viewModel.isLoading == false {
-                                Section {
-                                    VStack(alignment: .center) {
-                                        Image(systemName: "cart")
-                                            .font(.largeTitle)
-                                            .foregroundStyle(.secondary)
-                                        Text("アイテムがありません")
-                                            .font(.subheadline)
-                                            .foregroundStyle(.secondary)
-                                            .padding(.top, 4)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .accessibilityElement(children: .ignore)
-                                    .accessibilityIdentifier(UITestIdentifiers.Home.emptyState)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { editorConfig = EditorConfig(mode: .edit(item.id)) }
                                 }
                             }
                         }
+                        if !viewModel.purchasedItems.isEmpty {
+                            Section("購入済み") {
+                                ForEach(viewModel.purchasedItems) { item in
+                                    ShoppingItemRowView(item: item) {
+                                        Task { await viewModel.togglePurchased(item: item) }
+                                    }
+                                    .swipeActions(edge: .trailing) {
+                                        Button(role: .destructive) {
+                                            Task { await viewModel.delete(item: item) }
+                                        } label: {
+                                            Label("削除", systemImage: "trash")
+                                        }
+                                    }
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { editorConfig = EditorConfig(mode: .edit(item.id)) }
+                                }
+                            }
+                        }
+                        if viewModel.pendingItems.isEmpty,
+                            viewModel.purchasedItems.isEmpty,
+                            viewModel.isLoading == false {
+                            Section {
+                                VStack(alignment: .center) {
+                                    Image(systemName: "cart")
+                                        .font(.largeTitle)
+                                        .foregroundStyle(.secondary)
+                                    Text("アイテムがありません")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                        .padding(.top, 4)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .accessibilityElement(children: .ignore)
+                                .accessibilityIdentifier(UITestIdentifiers.Home.emptyState)
+                            }
+                        }
+                    }
                     .overlay { ProgressView().opacity(viewModel.isLoading ? 1 : 0) }
                     .task {
                         let shouldHandlePermissions = LaunchArguments.isUITesting == false
@@ -104,7 +103,7 @@ struct ContentView: View {
                     }
                     .onReceive(NotificationCenter.default.publisher(for: .geofenceNeedsSync)) { _ in
                         guard LaunchArguments.isUITesting == false,
-                              LaunchArguments.isRunningTests == false else { return }
+                            LaunchArguments.isRunningTests == false else { return }
                         Task { await environment.geofenceCoordinator.syncActiveGeofences() }
                     }
                     .alert("エラー", isPresented: Binding<Bool>(
@@ -256,11 +255,11 @@ private struct SlidingSidebarMenuView: View {
 
                     // メニュー項目
                     VStack(alignment: .leading, spacing: 0) {
-                MenuItemButton(
-                    icon: "mappin.and.ellipse",
-                    title: "地点管理",
-                    identifier: UITestIdentifiers.Menu.placeManagement
-                ) {
+                        MenuItemButton(
+                            icon: "mappin.and.ellipse",
+                            title: "地点管理",
+                            identifier: UITestIdentifiers.Menu.placeManagement
+                        ) {
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 isPresented = false
                             }
@@ -271,11 +270,11 @@ private struct SlidingSidebarMenuView: View {
 
                         Divider().padding(.leading, 56)
 
-                MenuItemButton(
-                    icon: "lock.doc",
-                    title: "プライバシーポリシー",
-                    identifier: UITestIdentifiers.Menu.privacyPolicy
-                ) {
+                        MenuItemButton(
+                            icon: "lock.doc",
+                            title: "プライバシーポリシー",
+                            identifier: UITestIdentifiers.Menu.privacyPolicy
+                        ) {
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 isPresented = false
                             }
@@ -286,11 +285,11 @@ private struct SlidingSidebarMenuView: View {
 
                         Divider().padding(.leading, 56)
 
-                MenuItemButton(
-                    icon: "doc.text",
-                    title: "OSSライセンス",
-                    identifier: UITestIdentifiers.Menu.ossLicenses
-                ) {
+                        MenuItemButton(
+                            icon: "doc.text",
+                            title: "OSSライセンス",
+                            identifier: UITestIdentifiers.Menu.ossLicenses
+                        ) {
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 isPresented = false
                             }

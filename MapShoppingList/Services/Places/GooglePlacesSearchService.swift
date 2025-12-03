@@ -96,7 +96,7 @@ final class GooglePlacesSearchService: PlacesSearchService {
 private extension GooglePlacesSearchService {
     func mapPlacesError(_ error: NSError) -> PlacesSearchError {
         if error.domain == kGMSPlacesErrorDomain,
-           let code = GMSPlacesErrorCode(rawValue: error.code) {
+            let code = GMSPlacesErrorCode(rawValue: error.code) {
             switch code {
             case .networkError, .serverError, .internalError:
                 return .serviceUnavailable("通信エラーが発生しました。時間をおいて再度お試しください。")
