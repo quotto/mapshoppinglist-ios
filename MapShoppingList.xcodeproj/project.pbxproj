@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		4BB19DD12ECB59ED007602D1 /* Config.secret.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */; };
 		4BB19DD22ECB59ED007602D1 /* Config.secret.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */; };
-
 		A6A4DDC5ADF7447DA426520D /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = DF1D5BD438B146A19B25138B /* GoogleMaps */; };
 		F402FB66CE16452E87A6EF6B /* GooglePlaces in Frameworks */ = {isa = PBXBuildFile; productRef = F80F050FDA744D41964D817A /* GooglePlaces */; };
 /* End PBXBuildFile section */
@@ -34,7 +33,6 @@
 /* Begin PBXFileReference section */
 		4B5C6A202EB116A5003D3B73 /* MapShoppingList.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MapShoppingList.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.secret.xcconfig; sourceTree = "<group>"; };
-
 		88F2E597BD7348A263AC1DFA /* MapShoppingListTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapShoppingListTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F9D0D8C72D9E3D9100A1E3A4 /* MapShoppingListUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapShoppingListUITests.swift; sourceTree = "<group>"; };
 		F9D0D8C82D9E3D9100A1E3A4 /* MapShoppingListUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapShoppingListUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -498,7 +496,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = "$(MARKETING_VERSION)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.MapShoppingList;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -543,7 +541,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = "$(MARKETING_VERSION)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.MapShoppingList;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
