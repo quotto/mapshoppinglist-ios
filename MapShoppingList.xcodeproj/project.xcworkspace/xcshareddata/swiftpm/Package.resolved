@@ -1,5 +1,5 @@
 {
-  "originHash" : "bc13b8ce024e43091eae0f00bb217abba557b0a57c642528ba808b1bd068c714",
+  "originHash" : "86637dc442c71104f75a56200546465ad0d0c21c1a9a5b1e03705a21c2aca070",
   "pins" : [
     {
       "identity" : "ios-maps-sdk",
@@ -17,6 +17,15 @@
       "state" : {
         "revision" : "f18c63a43ed8399a81e539525983377d63b7b003",
         "version" : "9.4.1"
+      }
+    },
+    {
+      "identity" : "swiftlintplugins",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SimplyDanny/SwiftLintPlugins",
+      "state" : {
+        "revision" : "ecafb5b056cb7995324f0d310a61f30661d00cad",
+        "version" : "0.62.2"
       }
     }
   ],

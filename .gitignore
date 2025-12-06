@@ -48,4 +48,4 @@ work/tasks/
 AppSecrets.json
 
 # xcconfigs
-*.xcconfig
+Config/*.xcconfig

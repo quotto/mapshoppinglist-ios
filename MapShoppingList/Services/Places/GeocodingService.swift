@@ -10,4 +10,3 @@ struct GeocodeResult: Equatable {
 protocol GeocodingService {
     func reverseGeocode(latitude: Double, longitude: Double) async -> Result<GeocodeResult, Error>
 }
-

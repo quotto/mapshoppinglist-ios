@@ -21,7 +21,12 @@ struct PlaceSearchMapView: UIViewRepresentable {
             parent.updateMarker(on: mapView, coordinate: coordinate)
         }
 
-        func mapView(_ mapView: GMSMapView, didTapPOIWithPlaceID placeID: String, name: String, location: CLLocationCoordinate2D) {
+        func mapView(
+            _ mapView: GMSMapView,
+            didTapPOIWithPlaceID placeID: String,
+            name: String,
+            location: CLLocationCoordinate2D
+        ) {
             parent.onPOITapped(placeID, name, location)
             parent.updateMarker(on: mapView, coordinate: location)
         }
@@ -72,8 +77,8 @@ struct PlaceSearchMapView: UIViewRepresentable {
 
         // 選択地点が無い場合は初期カメラ座標が更新された時のみ反映する。
         if let initialCameraCoordinate,
-           (context.coordinator.lastInitialCenter?.latitude != initialCameraCoordinate.latitude ||
-            context.coordinator.lastInitialCenter?.longitude != initialCameraCoordinate.longitude) {
+            context.coordinator.lastInitialCenter?.latitude != initialCameraCoordinate.latitude ||
+            context.coordinator.lastInitialCenter?.longitude != initialCameraCoordinate.longitude {
             mapView.animate(toLocation: initialCameraCoordinate)
             context.coordinator.lastInitialCenter = initialCameraCoordinate
         }
