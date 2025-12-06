@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4BB19DD12ECB59ED007602D1 /* Config.secret.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */; };
-		4BB19DD22ECB59ED007602D1 /* Config.secret.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */; };
+		4BED9B072EE46BC500F56D52 /* Config.base.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 4BED9B062EE46BC500F56D52 /* Config.base.xcconfig */; };
+		4BED9B082EE46BC500F56D52 /* Config.base.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 4BED9B062EE46BC500F56D52 /* Config.base.xcconfig */; };
 		A6A4DDC5ADF7447DA426520D /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = DF1D5BD438B146A19B25138B /* GoogleMaps */; };
 		F402FB66CE16452E87A6EF6B /* GooglePlaces in Frameworks */ = {isa = PBXBuildFile; productRef = F80F050FDA744D41964D817A /* GooglePlaces */; };
 /* End PBXBuildFile section */
@@ -32,7 +32,7 @@
 
 /* Begin PBXFileReference section */
 		4B5C6A202EB116A5003D3B73 /* MapShoppingList.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MapShoppingList.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.secret.xcconfig; sourceTree = "<group>"; };
+		4BED9B062EE46BC500F56D52 /* Config.base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.base.xcconfig; sourceTree = "<group>"; };
 		88F2E597BD7348A263AC1DFA /* MapShoppingListTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapShoppingListTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F9D0D8C72D9E3D9100A1E3A4 /* MapShoppingListUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapShoppingListUITests.swift; sourceTree = "<group>"; };
 		F9D0D8C82D9E3D9100A1E3A4 /* MapShoppingListUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapShoppingListUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -42,6 +42,11 @@
 		4B5C6A222EB116A5003D3B73 /* MapShoppingList */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = MapShoppingList;
+			sourceTree = "<group>";
+		};
+		4BED9B092EE46BF100F56D52 /* Config */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Config;
 			sourceTree = "<group>";
 		};
 		C107B63422E99AC859B1A343 /* MapShoppingListTests */ = {
@@ -86,7 +91,8 @@
 		4B5C6A172EB116A5003D3B73 = {
 			isa = PBXGroup;
 			children = (
-				4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */,
+				4BED9B092EE46BF100F56D52 /* Config */,
+				4BED9B062EE46BC500F56D52 /* Config.base.xcconfig */,
 				4B5C6A222EB116A5003D3B73 /* MapShoppingList */,
 				C107B63422E99AC859B1A343 /* MapShoppingListTests */,
 				F9D0D8C92D9E3D9100A1E3A4 /* MapShoppingListUITests */,
@@ -153,6 +159,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				4B5C6A222EB116A5003D3B73 /* MapShoppingList */,
+				4BED9B092EE46BF100F56D52 /* Config */,
 			);
 			name = MapShoppingList;
 			packageProductDependencies = (
@@ -177,6 +184,7 @@
 				F9D0D8D42D9E3D9100A1E3A4 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				4BED9B092EE46BF100F56D52 /* Config */,
 				F9D0D8C92D9E3D9100A1E3A4 /* MapShoppingListUITests */,
 			);
 			name = MapShoppingListUITests;
@@ -236,7 +244,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4BB19DD12ECB59ED007602D1 /* Config.secret.xcconfig in Resources */,
+				4BED9B072EE46BC500F56D52 /* Config.base.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -251,7 +259,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4BB19DD22ECB59ED007602D1 /* Config.secret.xcconfig in Resources */,
+				4BED9B082EE46BC500F56D52 /* Config.base.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -471,7 +479,7 @@
 		};
 		4B5C6A2C2EB116A5003D3B73 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */;
+			baseConfigurationReference = 4BED9B062EE46BC500F56D52 /* Config.base.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -516,7 +524,7 @@
 		};
 		4B5C6A2D2EB116A5003D3B73 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4BB19DD02ECB59ED007602D1 /* Config.secret.xcconfig */;
+			baseConfigurationReference = 4BED9B062EE46BC500F56D52 /* Config.base.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
