@@ -74,6 +74,8 @@ final class AppEnvironment {
     let buildGeofenceSyncPlanUseCase: BuildGeofenceSyncPlanUseCase
     let shouldSendNotificationUseCase: ShouldSendNotificationUseCase
 
+    // 依存性注入のため初期化処理が長いことを許容
+    // swiftlint:disable:next function_body_length
     init(
         stack: CoreDataStack = .shared,
         placesSearchService: PlacesSearchService = UnavailablePlacesSearchService(
@@ -111,11 +113,18 @@ final class AppEnvironment {
         updateItemUseCase = UpdateItemUseCase(itemRepository: shoppingRepo, linkRepository: linkRepo)
         deleteItemUseCase = DeleteShoppingItemUseCase(itemRepository: shoppingRepo, linkRepository: linkRepo)
         updatePurchasedUseCase = UpdatePurchasedStateUseCase(itemRepository: shoppingRepo)
-        markPlacePurchasedUseCase = MarkPlaceItemsPurchasedUseCase(itemRepository: shoppingRepo, placesRepository: placeRepo)
+        markPlacePurchasedUseCase = MarkPlaceItemsPurchasedUseCase(
+            itemRepository: shoppingRepo,
+            placesRepository: placeRepo
+        )
         createPlaceUseCase = CreatePlaceUseCase(placesRepository: placeRepo)
         updatePlaceNameUseCase = UpdatePlaceNameUseCase(placesRepository: placeRepo)
         deletePlaceUseCase = DeletePlaceUseCase(placesRepository: placeRepo)
-        linkItemToPlaceUseCase = LinkItemToPlaceUseCase(itemRepository: shoppingRepo, placesRepository: placeRepo, linkRepository: linkRepo)
+        linkItemToPlaceUseCase = LinkItemToPlaceUseCase(
+            itemRepository: shoppingRepo,
+            placesRepository: placeRepo,
+            linkRepository: linkRepo
+        )
         unlinkItemFromPlaceUseCase = UnlinkItemFromPlaceUseCase(itemRepository: shoppingRepo, linkRepository: linkRepo)
         getRecentPlacesUseCase = GetRecentPlacesUseCase(placesRepository: placeRepo)
         loadAllPlacesUseCase = LoadAllPlacesUseCase(placesRepository: placeRepo)

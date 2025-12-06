@@ -40,7 +40,7 @@ final class GeofenceCoordinator {
             try await geofenceRepository.registerGeofences(plan.toRegister)
             try await geofenceRepository.unregisterGeofences(plan.toUnregister)
         } catch {
-            // TODO: ログ収集などの実装を検討
+            // 今後の課題: ログ収集などを検討する
         }
     }
 
@@ -70,7 +70,7 @@ final class GeofenceCoordinator {
             let newState = NotificationState(placeId: placeId, lastNotifiedAt: now)
             try await notificationStateRepository.upsert(state: newState)
         } catch {
-            // TODO: ログ収集などの実装を検討
+            // 今後の課題: ログ収集などを検討する
             debugPrint("[Geofence] seq=\(eventSequence) error=\(error)")
         }
     }

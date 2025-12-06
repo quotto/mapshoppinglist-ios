@@ -9,7 +9,10 @@ public struct CreatePlaceUseCase {
     }
 
     public func execute(place: Place) async throws {
-        if let duplicate = try await placesRepository.findPlace(latitudeE6: place.latitudeE6, longitudeE6: place.longitudeE6), duplicate.id != place.id {
+        if let duplicate = try await placesRepository.findPlace(
+            latitudeE6: place.latitudeE6,
+            longitudeE6: place.longitudeE6
+        ), duplicate.id != place.id {
             throw DomainError.duplicatePlace
         }
         let total = try await placesRepository.countPlaces()

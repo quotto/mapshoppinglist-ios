@@ -5,9 +5,18 @@ struct RecentPlacesPickerView: View {
     @StateObject private var viewModel: RecentPlacesPickerViewModel
     private let onApply: (Set<UUID>) -> Void
 
-    init(environment: AppEnvironment, initialSelection: Set<UUID>, onApply: @escaping (Set<UUID>) -> Void) {
+    init(
+        environment: AppEnvironment,
+        initialSelection: Set<UUID>,
+        onApply: @escaping (Set<UUID>) -> Void
+    ) {
         self.onApply = onApply
-        _viewModel = StateObject(wrappedValue: RecentPlacesPickerViewModel(environment: environment, initialSelection: initialSelection))
+        _viewModel = StateObject(
+            wrappedValue: RecentPlacesPickerViewModel(
+                environment: environment,
+                initialSelection: initialSelection
+            )
+        )
     }
 
     var body: some View {
@@ -35,7 +44,10 @@ struct RecentPlacesPickerView: View {
                             viewModel.toggle(placeId: row.id)
                         } label: {
                             HStack {
-                                Image(systemName: viewModel.selectedIds.contains(row.id) ? "checkmark.circle.fill" : "circle")
+                                let iconName = viewModel.selectedIds.contains(row.id)
+                                    ? "checkmark.circle.fill"
+                                    : "circle"
+                                Image(systemName: iconName)
                                     .foregroundColor(.accentColor)
                                 VStack(alignment: .leading) {
                                     Text(row.title)

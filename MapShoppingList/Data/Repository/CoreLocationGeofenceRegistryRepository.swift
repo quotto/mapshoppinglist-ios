@@ -40,7 +40,10 @@ final class CoreLocationGeofenceRegistryRepository: NSObject, GeofenceRegistryRe
             region.notifyOnEntry = true
             region.notifyOnExit = false
             manager.startMonitoring(for: region)
-            debugPrint("[Geofence] start monitoring id=\(spec.id) center=(\(center.latitude), \(center.longitude)) radius=\(spec.radius)")
+            debugPrint(
+                "[Geofence] start monitoring id=\(spec.id) center=(\(center.latitude), \(center.longitude))"
+                    + " radius=\(spec.radius)"
+            )
         }
         logCurrentRegions(context: "register")
     }
@@ -57,7 +60,10 @@ final class CoreLocationGeofenceRegistryRepository: NSObject, GeofenceRegistryRe
 
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
         guard let placeId = Self.placeId(from: region.identifier) else { return }
-        debugPrint("[Geofence] didEnterRegion repo=\(ObjectIdentifier(self)) manager=\(ObjectIdentifier(manager)) id=\(region.identifier) at \(Date())")
+        debugPrint(
+            "[Geofence] didEnterRegion repo=\(ObjectIdentifier(self)) "
+                + "manager=\(ObjectIdentifier(manager)) id=\(region.identifier) at \(Date())"
+        )
         onRegionEntered?(placeId)
     }
 
@@ -69,7 +75,9 @@ final class CoreLocationGeofenceRegistryRepository: NSObject, GeofenceRegistryRe
 
 private extension CoreLocationGeofenceRegistryRepository {
     static var supportsBackgroundLocation: Bool {
-        guard let modes = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] else { return false }
+        guard let modes = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] else {
+            return false
+        }
         return modes.contains("location")
     }
 

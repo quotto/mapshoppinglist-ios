@@ -4,6 +4,8 @@ import CoreLocation
 import GooglePlaces
 
 @MainActor
+// 状態を一箇所に集約するためクラス長を暫定的に許容
+// swiftlint:disable:next type_body_length
 final class PlaceSearchViewModel: ObservableObject {
     @Published var query: String = ""
     @Published var places: [PlaceDetails] = []
@@ -285,11 +287,13 @@ final class PlaceSearchViewModel: ObservableObject {
         return initialCameraCoordinate
     }
 
-
     private func reverseGeocodeIfNeeded(for coordinate: CLLocationCoordinate2D) async {
         isGeocoding = true
         geocodeErrorMessage = nil
-        let result = await geocodingService.reverseGeocode(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let result = await geocodingService.reverseGeocode(
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude
+        )
         switch result {
         case let .success(geocode):
             selectedName = geocode.primaryText ?? geocode.secondaryText ?? "新しい地点"

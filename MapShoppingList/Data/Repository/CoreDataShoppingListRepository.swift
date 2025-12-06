@@ -28,7 +28,10 @@ final class CoreDataShoppingListRepository: ShoppingListRepository {
 
     func createItem(_ item: ShoppingItem) async throws {
         try await performWrite { context in
-            guard let entity = NSEntityDescription.entity(forEntityName: ManagedKeys.Item.entityName, in: context) else {
+            guard let entity = NSEntityDescription.entity(
+                forEntityName: ManagedKeys.Item.entityName,
+                in: context
+            ) else {
                 fatalError("Item entity missing")
             }
             let object = NSManagedObject(entity: entity, insertInto: context)
@@ -114,7 +117,11 @@ final class CoreDataShoppingListRepository: ShoppingListRepository {
             let createdAt = item.value(forKey: ManagedKeys.Item.createdAt) as? Date,
             let updatedAt = item.value(forKey: ManagedKeys.Item.updatedAt) as? Date
         else {
-            throw NSError(domain: "CoreDataShoppingListRepository", code: 0, userInfo: [NSLocalizedDescriptionKey: "Item entity is invalid"])
+            throw NSError(
+                domain: "CoreDataShoppingListRepository",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "Item entity is invalid"]
+            )
         }
         let note = item.value(forKey: ManagedKeys.Item.note) as? String
         let places = item.mutableSetValue(forKey: ManagedKeys.Item.places)
