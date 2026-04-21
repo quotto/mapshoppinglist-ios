@@ -11,12 +11,16 @@ final class GooglePlacesSearchService: PlacesSearchService {
         self.client = client
     }
 
-    func search(
-        query: String,
-        session: PlacesSearchSession?,
-        origin: CLLocationCoordinate2D?
-    ) async throws -> PlacesSearchResponse {
-        _ = session // Text Searchではセッションを利用しない
+    func search(query: String, options: PlacesSearchOptions) async throws -> PlacesSearchResponse {
+        _ = options.session // Text Searchではセッションを利用しない
+        NearbyDebugLogger.log(.placesAPI, "places text search started", metadata: [
+            "query": query,
+            "includedType": options.includedType ?? "nil",
+            "strictTypeFiltering": String(options.strictTypeFiltering),
+            "radiusMeters": String(Int(options.radiusMeters)),
+            "originLatitude": options.origin.map { String($0.latitude) } ?? "nil",
+            "originLongitude": options.origin.map { String($0.longitude) } ?? "nil"
+        ])
         let places: [PlaceDetails] = try await withCheckedThrowingContinuation { continuation in
             let myProperties = [
                 GMSPlaceProperty.name,
@@ -28,26 +32,79 @@ final class GooglePlacesSearchService: PlacesSearchService {
             request.isOpenNow = false
             request.rankPreference = .distance
             request.maxResultCount = Int32(Self.maxSearchResults)
-            if let origin {
+            request.includedType = options.includedType
+            request.isStrictTypeFiltering = options.strictTypeFiltering
+            if let origin = options.origin {
                 request.locationBias = GMSPlaceCircularLocationOption(
                     CLLocationCoordinate2DMake(origin.latitude, origin.longitude),
-                    5000.0
+                    options.radiusMeters
                 )
             }
             client.searchByText(with: request) { results, error in
                 if let error = error as NSError? {
+                    NearbyDebugLogger.log(.placesAPI, "places text search failed", metadata: [
+                        "query": query,
+                        "error": error.localizedDescription
+                    ])
                     continuation.resume(throwing: self.mapPlacesError(error))
                     return
                 }
-                let mapped = results?.map { result in
-                    PlaceDetails(
-                        id: result.placeID ?? "",
-                        name: result.name ?? "",
-                        latitude: result.coordinate.latitude,
-                        longitude: result.coordinate.longitude,
-                        formattedAddress: result.formattedAddress
-                    )
+                let mapped = results?.map(Self.makePlaceDetails)
+                NearbyDebugLogger.log(.placesAPI, "places text search succeeded", metadata: [
+                    "query": query,
+                    "resultCount": String(mapped?.count ?? 0)
+                ])
+                continuation.resume(returning: mapped ?? [])
+            }
+        }
+        return PlacesSearchResponse(
+            session: PlacesSearchSession(identifier: NSObject()),
+            places: places
+        )
+    }
+
+    func searchNearby(includedType: String, options: PlacesSearchOptions) async throws -> PlacesSearchResponse {
+        NearbyDebugLogger.log(.placesAPI, "places nearby search started", metadata: [
+            "includedType": includedType,
+            "radiusMeters": String(Int(options.radiusMeters)),
+            "originLatitude": options.origin.map { String($0.latitude) } ?? "nil",
+            "originLongitude": options.origin.map { String($0.longitude) } ?? "nil"
+        ])
+        guard let origin = options.origin else {
+            throw PlacesSearchError.locationPermission("現在地が取得できませんでした。端末の設定を確認してください。")
+        }
+        let places: [PlaceDetails] = try await withCheckedThrowingContinuation { continuation in
+            let properties = [
+                GMSPlaceProperty.name,
+                GMSPlaceProperty.placeID,
+                GMSPlaceProperty.coordinate,
+                GMSPlaceProperty.formattedAddress
+            ].map { $0.rawValue }
+            let locationRestriction = GMSPlaceCircularLocationOption(
+                CLLocationCoordinate2DMake(origin.latitude, origin.longitude),
+                options.radiusMeters
+            )
+            let request = GMSPlaceSearchNearbyRequest(
+                locationRestriction: locationRestriction,
+                placeProperties: properties
+            )
+            request.rankPreference = .distance
+            request.maxResultCount = Self.maxSearchResults
+            request.includedTypes = [includedType]
+            client.searchNearby(with: request) { results, error in
+                if let error = error as NSError? {
+                    NearbyDebugLogger.log(.placesAPI, "places nearby search failed", metadata: [
+                        "includedType": includedType,
+                        "error": error.localizedDescription
+                    ])
+                    continuation.resume(throwing: self.mapPlacesError(error))
+                    return
                 }
+                let mapped = results?.map(Self.makePlaceDetails)
+                NearbyDebugLogger.log(.placesAPI, "places nearby search succeeded", metadata: [
+                    "includedType": includedType,
+                    "resultCount": String(mapped?.count ?? 0)
+                ])
                 continuation.resume(returning: mapped ?? [])
             }
         }
@@ -63,6 +120,9 @@ final class GooglePlacesSearchService: PlacesSearchService {
     }
 
     func fetchPlaceDetails(placeId: String) async throws -> PlaceDetails {
+        NearbyDebugLogger.log(.placesAPI, "place details fetch started", metadata: [
+            "placeId": placeId
+        ])
         let properties = [
             GMSPlaceProperty.name.rawValue,
             GMSPlaceProperty.coordinate.rawValue,
@@ -73,10 +133,17 @@ final class GooglePlacesSearchService: PlacesSearchService {
         return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<PlaceDetails, Error>) in
             client.fetchPlace(with: request) { place, error in
                 if let error = error as NSError? {
+                    NearbyDebugLogger.log(.placesAPI, "place details fetch failed", metadata: [
+                        "placeId": placeId,
+                        "error": error.localizedDescription
+                    ])
                     continuation.resume(throwing: self.mapPlacesError(error))
                     return
                 }
                 guard let place = place else {
+                    NearbyDebugLogger.log(.placesAPI, "place details missing", metadata: [
+                        "placeId": placeId
+                    ])
                     continuation.resume(throwing: PlacesSearchError.serviceUnavailable("地点情報を取得できませんでした。"))
                     return
                 }
@@ -87,6 +154,10 @@ final class GooglePlacesSearchService: PlacesSearchService {
                     longitude: place.coordinate.longitude,
                     formattedAddress: place.formattedAddress
                 )
+                NearbyDebugLogger.log(.placesAPI, "place details fetch succeeded", metadata: [
+                    "placeId": details.id,
+                    "name": details.name
+                ])
                 continuation.resume(returning: details)
             }
         }
@@ -94,6 +165,16 @@ final class GooglePlacesSearchService: PlacesSearchService {
 }
 
 private extension GooglePlacesSearchService {
+    nonisolated static func makePlaceDetails(_ place: GMSPlace) -> PlaceDetails {
+        PlaceDetails(
+            id: place.placeID ?? "",
+            name: place.name ?? "",
+            latitude: place.coordinate.latitude,
+            longitude: place.coordinate.longitude,
+            formattedAddress: place.formattedAddress
+        )
+    }
+
     func mapPlacesError(_ error: NSError) -> PlacesSearchError {
         if error.domain == kGMSPlacesErrorDomain,
             let code = GMSPlacesErrorCode(rawValue: error.code) {

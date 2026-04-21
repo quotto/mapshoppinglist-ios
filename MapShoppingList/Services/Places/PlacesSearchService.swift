@@ -4,11 +4,10 @@ import CoreLocation
 /// Place検索APIの共通インタフェース。
 protocol PlacesSearchService {
     /// テキスト検索を実行する。
-    func search(
-        query: String,
-        session: PlacesSearchSession?,
-        origin: CLLocationCoordinate2D?
-    ) async throws -> PlacesSearchResponse
+    func search(query: String, options: PlacesSearchOptions) async throws -> PlacesSearchResponse
+
+    /// カテゴリを指定した周辺検索を実行する。
+    func searchNearby(includedType: String, options: PlacesSearchOptions) async throws -> PlacesSearchResponse
 
     /// 指定したプレイスIDの詳細を取得する。
     func fetchPlaceDetails(placeId: String, session: PlacesSearchSession) async throws -> PlaceDetails
@@ -26,6 +25,28 @@ struct PlacesSearchResponse {
 /// テキスト検索用のセッション。
 struct PlacesSearchSession {
     let identifier: AnyObject
+}
+
+struct PlacesSearchOptions {
+    let session: PlacesSearchSession?
+    let origin: CLLocationCoordinate2D?
+    let includedType: String?
+    let radiusMeters: CLLocationDistance
+    let strictTypeFiltering: Bool
+
+    init(
+        session: PlacesSearchSession? = nil,
+        origin: CLLocationCoordinate2D? = nil,
+        includedType: String? = nil,
+        radiusMeters: CLLocationDistance = 5_000,
+        strictTypeFiltering: Bool = false
+    ) {
+        self.session = session
+        self.origin = origin
+        self.includedType = includedType
+        self.radiusMeters = radiusMeters
+        self.strictTypeFiltering = strictTypeFiltering
+    }
 }
 
 /// プレイス詳細。
@@ -84,6 +105,6 @@ enum PlacesSearchError: LocalizedError {
 extension PlacesSearchService {
     /// セッションや原点を意識せずにテキスト検索を実行するための簡易ヘルパー。
     func search(query: String) async throws -> PlacesSearchResponse {
-        try await search(query: query, session: nil, origin: nil)
+        try await search(query: query, options: PlacesSearchOptions())
     }
 }

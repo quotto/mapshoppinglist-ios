@@ -369,7 +369,8 @@ flowchart LR
 
 ### 11.2 ビルド時の秘密情報の扱い
 
-- Google Maps / Places の API キーはバンドル内の `AppSecrets.json` から読み込む。
-- `Scripts/generate-secrets-json.sh` がビルド毎に `${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AppSecrets.json` を生成する。
-- 上記スクリプトは環境変数（例: `GOOGLE_MAPS_API_KEY`）を直接読み込む。CI では `ci_scripts/ci_post_clone.sh` がリポジトリルートに `Config.secret.xcconfig` を生成するため、ビルド前に当該ファイルを作成するか、環境変数を直接設定しておく。
-- API キーが未設定の場合は空の JSON が生成され、アプリ起動時に警告アラートを表示する。
+- `NEARBY_DEBUG_LOGGING_ENABLED`、`ITEM_CATEGORY_API_ENDPOINT`、`ITEM_CATEGORY_API_KEY`、`GOOGLE_MAPS_API_KEY` は User-Defined build setting として管理する。
+- 実際の値は `Config.base.xcconfig` または `Config.secret.xcconfig` からビルド時に注入する。
+- `ITEM_CATEGORY_API_ENDPOINT` のように `//` を含む値は、`.xcconfig` ではコメント扱いになるため `https:$(XC_SLASH)$(XC_SLASH)...` の形式で記述する。
+- アプリ実行時は `Info.plist` に展開された値を `Bundle.main` 経由で参照する。
+- 必須設定が未設定の場合は、アプリ起動時に警告アラートを表示する。

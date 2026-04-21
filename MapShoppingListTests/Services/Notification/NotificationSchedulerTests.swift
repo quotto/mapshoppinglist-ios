@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import CoreLocation
 import UserNotifications
 @testable import MapShoppingList
 
@@ -55,6 +56,35 @@ struct NotificationSchedulerTests {
         #expect(center.addedRequests.first?.content.title == "近くに スーパー")
     }
 
+    @Test("nearby suggestion notification formats title body and actions")
+    func scheduleNearbySuggestionBuildsItemNotification() async {
+        let center = StubNotificationCenter()
+        let scheduler = NotificationScheduler(center: center)
+        let item = ShoppingItem(
+            id: UUID(),
+            title: "牛乳",
+            note: nil,
+            isPurchased: false,
+            createdAt: Date(),
+            updatedAt: Date(),
+            placeIds: []
+        )
+
+        await scheduler.scheduleNearbySuggestion(
+            item: item,
+            placeName: "まいばすけっと",
+            coordinate: CLLocationCoordinate2D(latitude: 35.68, longitude: 139.76),
+            distanceMeters: 142
+        )
+
+        #expect(center.removedIdentifiers == ["nearby_item_\(item.id.uuidString)"])
+        #expect(center.addedRequests.count == 1)
+        #expect(center.addedRequests.first?.content.title == "牛乳が買えそうです")
+        #expect(center.addedRequests.first?.content.body == "まいばすけっと(約140m)")
+        #expect(center.addedRequests.first?.content.categoryIdentifier == NearbySuggestionNotificationContext.categoryIdentifier)
+        #expect(center.addedRequests.first?.content.userInfo[AppNotificationUserInfoKey.itemId] as? String == item.id.uuidString)
+    }
+
     @Test("requestAuthorization requests when notDetermined")
     func requestAuthorizationRequestsWhenNotDetermined() async {
         let center = StubNotificationCenter()
@@ -66,6 +96,105 @@ struct NotificationSchedulerTests {
         #expect(center.requestedOptions == [.alert, .sound, .badge])
         #expect(result == .authorized)
         #expect(center.status == .authorized)
+    }
+
+    @Test("default notification action opens item detail")
+    func defaultActionOpensItemDetail() async {
+        let repository = InMemoryShoppingListRepository()
+        let item = makeItem()
+        try? await repository.createItem(item)
+        let router = StubNotificationItemRouter()
+        let handler = NotificationActionHandler(
+            updatePurchasedUseCase: UpdatePurchasedStateUseCase(itemRepository: repository),
+            deleteShoppingItemUseCase: DeleteShoppingItemUseCase(
+                itemRepository: repository,
+                linkRepository: InMemoryItemPlaceLinkRepository()
+            ),
+            itemRouter: router,
+            mapRouter: StubNotificationMapRouter()
+        )
+
+        await handler.handle(
+            actionIdentifier: UNNotificationDefaultActionIdentifier,
+            context: makeContext(itemId: item.id)
+        )
+
+        #expect(router.openedItemIds == [item.id])
+    }
+
+    @Test("purchased action updates item state")
+    func purchasedActionMarksItemPurchased() async throws {
+        let repository = InMemoryShoppingListRepository()
+        let item = makeItem()
+        try await repository.createItem(item)
+        let handler = NotificationActionHandler(
+            updatePurchasedUseCase: UpdatePurchasedStateUseCase(itemRepository: repository),
+            deleteShoppingItemUseCase: DeleteShoppingItemUseCase(
+                itemRepository: repository,
+                linkRepository: InMemoryItemPlaceLinkRepository()
+            ),
+            itemRouter: StubNotificationItemRouter(),
+            mapRouter: StubNotificationMapRouter()
+        )
+
+        await handler.handle(
+            actionIdentifier: NearbySuggestionNotificationContext.purchasedActionIdentifier,
+            context: makeContext(itemId: item.id)
+        )
+
+        let updated = try await repository.fetchItem(id: item.id)
+        #expect(updated?.isPurchased == true)
+    }
+
+    @Test("delete action removes item")
+    func deleteActionDeletesItem() async throws {
+        let repository = InMemoryShoppingListRepository()
+        let item = makeItem()
+        try await repository.createItem(item)
+        let handler = NotificationActionHandler(
+            updatePurchasedUseCase: UpdatePurchasedStateUseCase(itemRepository: repository),
+            deleteShoppingItemUseCase: DeleteShoppingItemUseCase(
+                itemRepository: repository,
+                linkRepository: InMemoryItemPlaceLinkRepository()
+            ),
+            itemRouter: StubNotificationItemRouter(),
+            mapRouter: StubNotificationMapRouter()
+        )
+
+        await handler.handle(
+            actionIdentifier: NearbySuggestionNotificationContext.deleteActionIdentifier,
+            context: makeContext(itemId: item.id)
+        )
+
+        let updated = try await repository.fetchItem(id: item.id)
+        #expect(updated == nil)
+    }
+
+    @Test("map action falls back to item detail when map app cannot open")
+    func mapActionFallsBackToItemDetail() async {
+        let repository = InMemoryShoppingListRepository()
+        let item = makeItem()
+        try? await repository.createItem(item)
+        let router = StubNotificationItemRouter()
+        let mapRouter = StubNotificationMapRouter(result: false)
+        let handler = NotificationActionHandler(
+            updatePurchasedUseCase: UpdatePurchasedStateUseCase(itemRepository: repository),
+            deleteShoppingItemUseCase: DeleteShoppingItemUseCase(
+                itemRepository: repository,
+                linkRepository: InMemoryItemPlaceLinkRepository()
+            ),
+            itemRouter: router,
+            mapRouter: mapRouter
+        )
+        let context = makeContext(itemId: item.id)
+
+        await handler.handle(
+            actionIdentifier: NearbySuggestionNotificationContext.mapActionIdentifier,
+            context: context
+        )
+
+        #expect(mapRouter.openedContexts == [context])
+        #expect(router.openedItemIds == [item.id])
     }
 }
 
@@ -102,5 +231,52 @@ private final class StubNotificationCenter: NotificationCentering {
 
     enum StubError: Error {
         case failed
+    }
+}
+
+@MainActor
+private final class StubNotificationItemRouter: NotificationItemRouting {
+    private(set) var openedItemIds: [UUID] = []
+
+    func openItemDetail(itemId: UUID) {
+        openedItemIds.append(itemId)
+    }
+}
+
+@MainActor
+private final class StubNotificationMapRouter: NotificationMapRouting {
+    private let result: Bool
+    private(set) var openedContexts: [NearbySuggestionNotificationContext] = []
+
+    init(result: Bool = true) {
+        self.result = result
+    }
+
+    func openMap(for context: NearbySuggestionNotificationContext) async -> Bool {
+        openedContexts.append(context)
+        return result
+    }
+}
+
+private extension NotificationSchedulerTests {
+    func makeItem() -> ShoppingItem {
+        ShoppingItem(
+            id: UUID(),
+            title: "牛乳",
+            note: nil,
+            isPurchased: false,
+            createdAt: Date(),
+            updatedAt: Date(),
+            placeIds: []
+        )
+    }
+
+    func makeContext(itemId: UUID) -> NearbySuggestionNotificationContext {
+        NearbySuggestionNotificationContext(
+            itemId: itemId,
+            placeName: "まいばすけっと",
+            placeLatitude: 35.68,
+            placeLongitude: 139.76
+        )
     }
 }

@@ -30,6 +30,16 @@ struct ManagedKeys {
         static let place = "place"
         static let lastNotifiedAt = "lastNotifiedAt"
     }
+
+    struct NearbySuggestionState {
+        static let entityName = "NearbySuggestionState"
+        static let item = "item"
+        static let lastNotifiedAt = "lastNotifiedAt"
+        static let lastNotifiedLatitudeE6 = "lastNotifiedLatitudeE6"
+        static let lastNotifiedLongitudeE6 = "lastNotifiedLongitudeE6"
+        static let lastSuggestedPlaceID = "lastSuggestedPlaceID"
+        static let lastSuggestedPlaceName = "lastSuggestedPlaceName"
+    }
 }
 
 extension NSManagedObjectContext {

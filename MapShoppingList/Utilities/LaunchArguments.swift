@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import CoreMotion
 import UserNotifications
 
 enum LaunchArguments {
@@ -11,6 +12,7 @@ enum LaunchArguments {
 
     private static let scenarioKey = "UITEST_SCENARIO"
     private static let locationStatusKey = "UITEST_LOCATION_STATUS"
+    private static let activityStatusKey = "UITEST_ACTIVITY_STATUS"
     private static let notificationStatusKey = "UITEST_NOTIFICATION_STATUS"
 
     static var uiTestScenario: String? {
@@ -44,6 +46,24 @@ enum LaunchArguments {
             return .denied
         case "provisional":
             return .provisional
+        default:
+            return nil
+        }
+    }
+
+    static var activityAuthorizationOverride: CMAuthorizationStatus? {
+        guard let value = ProcessInfo.processInfo.environment[activityStatusKey]?.lowercased() else {
+            return nil
+        }
+        switch value {
+        case "authorized":
+            return .authorized
+        case "denied":
+            return .denied
+        case "restricted":
+            return .restricted
+        case "not_determined":
+            return .notDetermined
         default:
             return nil
         }

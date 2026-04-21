@@ -9,11 +9,11 @@ struct UnavailablePlacesSearchService: PlacesSearchService {
         self.reason = reason
     }
 
-    func search(
-        query: String,
-        session: PlacesSearchSession?,
-        origin: CLLocationCoordinate2D?
-    ) async throws -> PlacesSearchResponse {
+    func search(query: String, options: PlacesSearchOptions) async throws -> PlacesSearchResponse {
+        throw PlacesSearchError.serviceUnavailable(reason)
+    }
+
+    func searchNearby(includedType: String, options: PlacesSearchOptions) async throws -> PlacesSearchResponse {
         throw PlacesSearchError.serviceUnavailable(reason)
     }
 

@@ -5,8 +5,11 @@ brew install swift-package-list
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SECRET_CONFIG_PATH="${SCRIPT_DIR}/../Config/Config.secret.xcconfig"
 VERSION_CONFIG_PATH="${SCRIPT_DIR}/../Config/Config.version.xcconfig"
+ESCAPED_ITEM_CATEGORY_API_ENDPOINT="$(printf '%s' "${ITEM_CATEGORY_API_ENDPOINT}" | python3 -c 'import sys; print(sys.stdin.read().replace("/", "$(XC_SLASH)"), end="")')"
 
 set +x 2>/dev/null
-printf "GOOGLE_MAPS_API_KEY = %s\n" "${GOOGLE_MAPS_API_KEY}" >> "${SECRET_CONFIG_PATH}"
+printf "GOOGLE_MAPS_API_KEY = \"%s\"\n" "${GOOGLE_MAPS_API_KEY}" >> "${SECRET_CONFIG_PATH}"
+printf "ITEM_CATEGORY_API_ENDPOINT = %s\n" "${ESCAPED_ITEM_CATEGORY_API_ENDPOINT}" >> "${SECRET_CONFIG_PATH}"
+printf "ITEM_CATEGORY_API_KEY = \"%s\"\n" "${ITEM_CATEGORY_API_KEY}" >> "${SECRET_CONFIG_PATH}"
 printf "MARKETING_VERSION = 1.%s\n" "${CI_PULL_REQUEST_NUMBER:-0}" >> "${VERSION_CONFIG_PATH}"
 set -x 2>/dev/null

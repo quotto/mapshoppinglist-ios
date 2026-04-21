@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreLocation
+import CoreMotion
 
 @main
 struct MapShoppingListApp: App {
@@ -22,13 +23,20 @@ struct MapShoppingListApp: App {
             environment = Self.makeTestEnvironment(reason: "UnitTests", useRealMaps: false)
             _configurationWarning = State(initialValue: nil)
         } else {
-            let result = MapServicesConfigurator.configure()
+            let mapResult = MapServicesConfigurator.configure()
+            let itemCategoryResult = ItemCategoryServicesConfigurator.configure()
             AppEnvironment.configureShared(
-                placesSearchService: result.placesService,
-                geocodingService: result.geocodingService
+                placesSearchService: mapResult.placesService,
+                geocodingService: mapResult.geocodingService,
+                itemCategoryClassifier: itemCategoryResult.classifier
             )
             environment = AppEnvironment.shared
-            _configurationWarning = State(initialValue: result.warningMessage)
+            _configurationWarning = State(
+                initialValue: [mapResult.warningMessage, itemCategoryResult.warningMessage]
+                    .compactMap { $0 }
+                    .joined(separator: "\n\n")
+                    .nilIfEmpty
+            )
         }
     }
 
@@ -46,22 +54,34 @@ struct MapShoppingListApp: App {
                 stack: stack,
                 placesSearchService: mapResult.placesService,
                 geocodingService: mapResult.geocodingService,
+                itemCategoryClassifier: UnavailableItemCategoryClassifier(reason: reason),
                 geofenceRegistryRepository: NoopGeofenceRegistryRepository(),
                 notificationScheduler: notificationScheduler,
                 locationPermissionManager: locationManager,
-                currentLocationProvider: DefaultCurrentLocationProvider()
+                currentLocationProvider: DefaultCurrentLocationProvider(),
+                activityPermissionManager: NoopActivityPermissionManager(
+                    status: LaunchArguments.activityAuthorizationOverride ?? .authorized
+                ),
+                activityMonitor: NoopActivityMonitor(),
+                nearbySuggestionTriggerHandler: NoopNearbySuggestionTriggerHandler()
             )
         } else {
             AppEnvironment.configureShared(
                 stack: stack,
                 placesSearchService: UnavailablePlacesSearchService(reason: reason),
                 geocodingService: UnavailableGeocodingService(reason: reason),
+                itemCategoryClassifier: UnavailableItemCategoryClassifier(reason: reason),
                 geofenceRegistryRepository: NoopGeofenceRegistryRepository(),
                 notificationScheduler: notificationScheduler,
                 locationPermissionManager: locationManager,
                 currentLocationProvider: FixedCurrentLocationProvider(
                     coordinate: PlaceSearchViewModel.fallbackCoordinate
-                )
+                ),
+                activityPermissionManager: NoopActivityPermissionManager(
+                    status: LaunchArguments.activityAuthorizationOverride ?? .authorized
+                ),
+                activityMonitor: NoopActivityMonitor(),
+                nearbySuggestionTriggerHandler: NoopNearbySuggestionTriggerHandler()
             )
         }
         let environment = AppEnvironment.shared
@@ -83,5 +103,11 @@ struct MapShoppingListApp: App {
                     Text(configurationWarning ?? "")
                 }
         }
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
 }

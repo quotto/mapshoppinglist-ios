@@ -149,7 +149,6 @@
 			buildPhases = (
 				4B5C6A1C2EB116A5003D3B73 /* Sources */,
 				4B5C6A1D2EB116A5003D3B73 /* Frameworks */,
-				E14BD5E355EB4D19B8626051 /* Generate Secrets JSON */,
 				4B5C6A1E2EB116A5003D3B73 /* Resources */,
 			);
 			buildRules = (
@@ -264,30 +263,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		E14BD5E355EB4D19B8626051 /* Generate Secrets JSON */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PROJECT_DIR}/Scripts/generate-secrets-json.sh",
-			);
-			name = "Generate Secrets JSON";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AppSecrets.json",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PROJECT_DIR}/Scripts/generate-secrets-json.sh\" \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		4B5C6A1C2EB116A5003D3B73 /* Sources */ = {
@@ -489,17 +464,8 @@
 				DEVELOPMENT_TEAM = MM4G8YRVBB;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "地図で買い物リスト";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "位置情報を利用して登録済みのお店付近でリマインド通知を行います。";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "位置情報を利用して登録済みのお店付近でリマインド通知を行います。";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UIBackgroundModes = location;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MapShoppingList-Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -534,17 +500,8 @@
 				DEVELOPMENT_TEAM = MM4G8YRVBB;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "地図で買い物リスト";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "位置情報を利用して登録済みのお店付近でリマインド通知を行います。";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "位置情報を利用して登録済みのお店付近でリマインド通知を行います。";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UIBackgroundModes = location;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MapShoppingList-Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

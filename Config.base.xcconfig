@@ -1,2 +1,8 @@
+NEARBY_DEBUG_LOGGING_ENABLED = NO
+ITEM_CATEGORY_API_ENDPOINT =
+ITEM_CATEGORY_API_KEY =
+GOOGLE_MAPS_API_KEY =
+XC_SLASH = /
+
 # include? "Config/Config.version.xcconfig"
-# include "Config/Config.secret.xcconfig"
+# include? "Config/Config.secret.xcconfig"

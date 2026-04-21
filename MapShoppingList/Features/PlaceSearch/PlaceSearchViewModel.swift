@@ -91,8 +91,7 @@ final class PlaceSearchViewModel: ObservableObject {
             let origin = await resolveSearchOrigin()
             let response = try await placesSearchService.search(
                 query: trimmed,
-                session: nil,
-                origin: origin
+                options: PlacesSearchOptions(origin: origin)
             )
             places = response.places
             isPredictionListVisible = response.places.isEmpty == false

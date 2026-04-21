@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 import UserNotifications
 
 /// テストやプレビューで通知スケジューラを無効化する実装。
@@ -17,5 +18,14 @@ final class NoopNotificationScheduler: NotificationScheduling {
 
     func requestAuthorizationIfNeeded() async {}
 
+    func registerCategories() {}
+
     func schedule(place: Place, items: [ShoppingItem]) async {}
+
+    func scheduleNearbySuggestion(
+        item: ShoppingItem,
+        placeName: String,
+        coordinate: CLLocationCoordinate2D,
+        distanceMeters: CLLocationDistance
+    ) async {}
 }

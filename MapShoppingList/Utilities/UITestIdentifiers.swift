@@ -8,6 +8,7 @@ enum UITestIdentifiers {
         static let itemRowPrefix = "home.item_row."
         static let checkboxPrefix = "home.checkbox."
         static let permissionLocationCard = "home.permission.location"
+        static let permissionActivityCard = "home.permission.activity"
         static let permissionNotificationCard = "home.permission.notification"
     }
 
@@ -23,6 +24,7 @@ enum UITestIdentifiers {
         static let placeManagement = "menu.place_management"
         static let privacyPolicy = "menu.privacy_policy"
         static let ossLicenses = "menu.oss_licenses"
+        static let debugLogs = "menu.debug_logs"
     }
 
     enum PlaceManagement {
@@ -42,6 +44,7 @@ enum UITestIdentifiers {
 
     enum PermissionPrompt {
         static let locationCard = Home.permissionLocationCard
+        static let activityCard = Home.permissionActivityCard
         static let notificationCard = Home.permissionNotificationCard
     }
 }
