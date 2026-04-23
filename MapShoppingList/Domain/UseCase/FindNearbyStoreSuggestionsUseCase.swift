@@ -66,7 +66,7 @@ struct FindNearbyStoreSuggestionsUseCase {
                 locale: locale,
                 country: country
             ) {
-                NearbyDebugLogger.log(.nearbyDecision, "item resolved suggestion", metadata: [
+                NearbyDebugLogger.log(.nearbyDecision, "item resolved suggestion ", metadata: [
                     "itemId": item.id.uuidString,
                     "itemTitle": item.title,
                     "placeId": suggestion.place.id,

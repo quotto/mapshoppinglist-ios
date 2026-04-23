@@ -202,7 +202,7 @@ final class PermissionStatusViewModel: ObservableObject {
         case .notDetermined:
             return "移動から停止に変わったタイミングで近くのお店候補を通知するため、アクティビティへのアクセスを許可してください。"
         case .denied:
-            return "アクティビティへのアクセスが無効です。設定アプリでモーションとフィットネスを有効にしてください。"
+            return "移動から停止に変わったタイミングで近くのお店候補を通知するため、アクティビティへのアクセスを許可してください。"
         case .restricted:
             return "このデバイスではアクティビティ情報にアクセスできません。"
         case .authorized:
