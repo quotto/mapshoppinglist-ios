@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import CoreMotion
 
 struct PermissionPromptSection: View {
     @ObservedObject var viewModel: PermissionStatusViewModel
@@ -16,6 +17,22 @@ struct PermissionPromptSection: View {
                     isPrimaryLoading: viewModel.isRequestingLocation,
                     primaryAction: {
                         handleLocationPrimaryAction()
+                    },
+                    secondaryTitle: nil,
+                    secondaryAction: nil
+                )
+            }
+
+            if viewModel.needsActivityPrompt {
+                PermissionPromptCard(
+                    identifier: UITestIdentifiers.PermissionPrompt.activityCard,
+                    icon: "figure.walk.circle",
+                    title: "アクティビティの許可設定",
+                    message: viewModel.activityMessage,
+                    primaryTitle: viewModel.activityPrimaryButtonTitle,
+                    isPrimaryLoading: viewModel.isRequestingActivity,
+                    primaryAction: {
+                        handleActivityPrimaryAction()
                     },
                     secondaryTitle: nil,
                     secondaryAction: nil
@@ -59,6 +76,19 @@ struct PermissionPromptSection: View {
         case .notDetermined:
             Task { await viewModel.requestNotificationAuthorization() }
         case .denied, .provisional, .ephemeral:
+            viewModel.openSettings()
+        case .authorized:
+            break
+        @unknown default:
+            viewModel.openSettings()
+        }
+    }
+
+    private func handleActivityPrimaryAction() {
+        switch viewModel.activityStatus {
+        case .notDetermined:
+            Task { await viewModel.requestActivityAuthorization() }
+        case .denied, .restricted:
             viewModel.openSettings()
         case .authorized:
             break

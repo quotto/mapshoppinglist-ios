@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import CoreLocation
+import CoreMotion
 
 /// アプリ全体で利用する依存関係を束ねるコンテナ。
 @MainActor
@@ -20,20 +21,30 @@ final class AppEnvironment {
         stack: CoreDataStack = .shared,
         placesSearchService: PlacesSearchService,
         geocodingService: GeocodingService,
+        itemCategoryClassifier: ItemCategoryClassifying,
         geofenceRegistryRepository: GeofenceRegistryRepository? = nil,
         notificationScheduler: NotificationScheduling? = nil,
+        notificationActionHandler: NotificationActionHandling? = nil,
         locationPermissionManager: LocationPermissionManager? = nil,
         currentLocationProvider: CurrentLocationProviding? = nil,
+        activityPermissionManager: ActivityPermissionManaging? = nil,
+        activityMonitor: ActivityMonitoring? = nil,
+        nearbySuggestionTriggerHandler: NearbySuggestionTriggerHandling? = nil,
         networkMonitor: NetworkMonitor? = nil
     ) {
         sharedInstance = AppEnvironment(
             stack: stack,
             placesSearchService: placesSearchService,
             geocodingService: geocodingService,
+            itemCategoryClassifier: itemCategoryClassifier,
             geofenceRegistryRepository: geofenceRegistryRepository,
             notificationScheduler: notificationScheduler,
+            notificationActionHandler: notificationActionHandler,
             locationPermissionManager: locationPermissionManager,
             currentLocationProvider: currentLocationProvider,
+            activityPermissionManager: activityPermissionManager,
+            activityMonitor: activityMonitor,
+            nearbySuggestionTriggerHandler: nearbySuggestionTriggerHandler,
             networkMonitor: networkMonitor,
             isSharedInstance: true
         )
@@ -45,14 +56,19 @@ final class AppEnvironment {
     let placesRepository: PlacesRepository
     let linkRepository: ItemPlaceLinkRepository
     let notificationRepository: NotificationStateRepository
+    let nearbySuggestionStateRepository: NearbySuggestionStateRepository
     let geofenceRegistryRepository: GeofenceRegistryRepository
 
     // MARK: - Services
     let placesSearchService: PlacesSearchService
     let geocodingService: GeocodingService
+    let itemCategoryClassifier: ItemCategoryClassifying
     let locationPermissionManager: LocationPermissionManager
     let currentLocationProvider: CurrentLocationProviding
+    let activityPermissionManager: ActivityPermissionManaging
     let notificationScheduler: NotificationScheduling
+    let notificationActionHandler: NotificationActionHandling
+    let activityMonitor: ActivityMonitoring
     let geofenceCoordinator: GeofenceCoordinator
     let networkMonitor: NetworkMonitor
 
@@ -73,6 +89,7 @@ final class AppEnvironment {
     let getShoppingItemUseCase: GetShoppingItemUseCase
     let buildGeofenceSyncPlanUseCase: BuildGeofenceSyncPlanUseCase
     let shouldSendNotificationUseCase: ShouldSendNotificationUseCase
+    let findNearbyStoreSuggestionsUseCase: FindNearbyStoreSuggestionsUseCase
 
     // 依存性注入のため初期化処理が長いことを許容
     // swiftlint:disable:next function_body_length
@@ -84,10 +101,17 @@ final class AppEnvironment {
         geocodingService: GeocodingService = UnavailableGeocodingService(
             reason: "Google Maps/Places APIキーが設定されていません。"
         ),
+        itemCategoryClassifier: ItemCategoryClassifying = UnavailableItemCategoryClassifier(
+            reason: "カテゴリ判定APIが設定されていません。"
+        ),
         geofenceRegistryRepository: GeofenceRegistryRepository? = nil,
         notificationScheduler: NotificationScheduling? = nil,
+        notificationActionHandler: NotificationActionHandling? = nil,
         locationPermissionManager: LocationPermissionManager? = nil,
         currentLocationProvider: CurrentLocationProviding? = nil,
+        activityPermissionManager: ActivityPermissionManaging? = nil,
+        activityMonitor: ActivityMonitoring? = nil,
+        nearbySuggestionTriggerHandler: NearbySuggestionTriggerHandling? = nil,
         networkMonitor: NetworkMonitor? = nil,
         isSharedInstance: Bool = false
     ) {
@@ -97,6 +121,7 @@ final class AppEnvironment {
         let placeRepo = CoreDataPlacesRepository(stack: stack)
         let linkRepo = CoreDataItemPlaceLinkRepository(stack: stack)
         let notifyRepo = CoreDataNotificationStateRepository(stack: stack)
+        let nearbySuggestionRepo = CoreDataNearbySuggestionStateRepository(stack: stack)
         // CoreLocation ベースのジオフェンス登録を利用。
         var geofenceRepo: GeofenceRegistryRepository = geofenceRegistryRepository ?? Self.defaultGeofenceRepository()
 
@@ -104,10 +129,12 @@ final class AppEnvironment {
         placesRepository = placeRepo
         linkRepository = linkRepo
         notificationRepository = notifyRepo
+        nearbySuggestionStateRepository = nearbySuggestionRepo
         self.geofenceRegistryRepository = geofenceRepo
 
         self.placesSearchService = placesSearchService
         self.geocodingService = geocodingService
+        self.itemCategoryClassifier = itemCategoryClassifier
 
         addItemUseCase = AddShoppingItemUseCase(itemRepository: shoppingRepo, linkRepository: linkRepo)
         updateItemUseCase = UpdateItemUseCase(itemRepository: shoppingRepo, linkRepository: linkRepo)
@@ -132,14 +159,36 @@ final class AppEnvironment {
         getShoppingItemUseCase = GetShoppingItemUseCase(repository: shoppingRepo)
         buildGeofenceSyncPlanUseCase = BuildGeofenceSyncPlanUseCase(registryRepository: geofenceRepo)
         shouldSendNotificationUseCase = ShouldSendNotificationUseCase()
+        findNearbyStoreSuggestionsUseCase = FindNearbyStoreSuggestionsUseCase(
+            loadShoppingItemsUseCase: loadShoppingItemsUseCase,
+            nearbySuggestionStateRepository: nearbySuggestionRepo,
+            shouldSuggestNearbyStoreUseCase: ShouldSuggestNearbyStoreUseCase(),
+            placesSearchService: placesSearchService,
+            itemCategoryClassifier: itemCategoryClassifier
+        )
 
         self.networkMonitor = networkMonitor ?? NetworkMonitor()
         self.networkMonitor.start()
 
         self.locationPermissionManager = locationPermissionManager ?? Self.defaultLocationPermissionManager()
         self.currentLocationProvider = currentLocationProvider ?? Self.defaultCurrentLocationProvider()
+        self.activityPermissionManager = activityPermissionManager ?? Self.defaultActivityPermissionManager()
         let resolvedScheduler: NotificationScheduling = notificationScheduler ?? Self.defaultNotificationScheduler()
         self.notificationScheduler = resolvedScheduler
+        self.notificationActionHandler = notificationActionHandler ?? NotificationActionHandler(
+            updatePurchasedUseCase: updatePurchasedUseCase,
+            deleteShoppingItemUseCase: deleteItemUseCase
+        )
+        let resolvedTriggerHandler = nearbySuggestionTriggerHandler ?? NearbySuggestionTriggerProcessor(
+            findNearbyStoreSuggestionsUseCase: findNearbyStoreSuggestionsUseCase,
+            nearbySuggestionStateRepository: nearbySuggestionRepo,
+            notificationScheduler: resolvedScheduler
+        )
+        self.activityMonitor = activityMonitor ?? MotionActivityMonitor(
+            permissionManager: self.activityPermissionManager,
+            currentLocationProvider: self.currentLocationProvider,
+            triggerHandler: resolvedTriggerHandler
+        )
         geofenceCoordinator = GeofenceCoordinator(
             placesRepository: placeRepo,
             loadAllPlacesUseCase: loadAllPlacesUseCase,
@@ -186,6 +235,15 @@ private extension AppEnvironment {
             )
         }
         return DefaultCurrentLocationProvider()
+    }
+
+    static func defaultActivityPermissionManager() -> ActivityPermissionManaging {
+        if LaunchArguments.isRunningTests {
+            return NoopActivityPermissionManager(
+                status: LaunchArguments.activityAuthorizationOverride ?? .authorized
+            )
+        }
+        return DefaultActivityPermissionManager()
     }
 }
 

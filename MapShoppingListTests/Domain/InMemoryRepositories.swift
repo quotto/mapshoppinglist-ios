@@ -139,3 +139,28 @@ final class InMemoryNotificationStateRepository: NotificationStateRepository {
         storage[state.placeId] = state
     }
 }
+
+final class InMemoryNearbySuggestionStateRepository: NearbySuggestionStateRepository {
+    private var storage: [UUID: NearbySuggestionState] = [:]
+
+    func fetchState(forItem itemId: UUID) async throws -> NearbySuggestionState? {
+        storage[itemId]
+    }
+
+    func upsert(state: NearbySuggestionState) async throws {
+        storage[state.itemId] = state
+    }
+}
+
+struct StubItemCategoryClassifier: ItemCategoryClassifying {
+    var result: Result<ItemCategoryClassification, Error>
+
+    func classify(
+        itemName: String,
+        locale: String,
+        country: String,
+        maxCategories: Int
+    ) async throws -> ItemCategoryClassification {
+        try result.get()
+    }
+}

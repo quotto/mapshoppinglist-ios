@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import CoreLocation
 import UserNotifications
 @testable import MapShoppingList
 
@@ -13,8 +14,24 @@ struct GeofenceCoordinatorTests {
         let itemsRepo = StubShoppingListRepository()
         let notificationRepo = StubNotificationStateRepository()
 
-        let placeA = Place(id: UUID(), name: "A", latitudeE6: 100, longitudeE6: 200, note: nil, lastUsedAt: Date(), isActive: true)
-        let placeB = Place(id: UUID(), name: "B", latitudeE6: 300, longitudeE6: 400, note: nil, lastUsedAt: nil, isActive: false)
+        let placeA = Place(
+            id: UUID(),
+            name: "A",
+            latitudeE6: 100,
+            longitudeE6: 200,
+            note: nil,
+            lastUsedAt: Date(),
+            isActive: true
+        )
+        let placeB = Place(
+            id: UUID(),
+            name: "B",
+            latitudeE6: 300,
+            longitudeE6: 400,
+            note: nil,
+            lastUsedAt: nil,
+            isActive: false
+        )
         placesRepo.places = [placeA, placeB]
 
         let coordinator = GeofenceCoordinator(
@@ -46,10 +63,26 @@ struct GeofenceCoordinatorTests {
         let scheduler = StubNotificationScheduler()
 
         let placeId = UUID()
-        let place = Place(id: placeId, name: "スーパー", latitudeE6: 100, longitudeE6: 200, note: nil, lastUsedAt: Date(), isActive: true)
+        let place = Place(
+            id: placeId,
+            name: "スーパー",
+            latitudeE6: 100,
+            longitudeE6: 200,
+            note: nil,
+            lastUsedAt: Date(),
+            isActive: true
+        )
         placesRepo.places = [place]
         itemsRepo.items = [
-            ShoppingItem(id: UUID(), title: "牛乳", note: nil, isPurchased: false, createdAt: Date(), updatedAt: Date(), placeIds: [placeId])
+            ShoppingItem(
+                id: UUID(),
+                title: "牛乳",
+                note: nil,
+                isPurchased: false,
+                createdAt: Date(),
+                updatedAt: Date(),
+                placeIds: [placeId]
+            )
         ]
 
         let coordinator = GeofenceCoordinator(
@@ -148,7 +181,16 @@ private final class StubNotificationScheduler: NotificationScheduling {
 
     func requestAuthorizationIfNeeded() async {}
 
+    func registerCategories() {}
+
     func schedule(place: Place, items: [ShoppingItem]) async {
         scheduledPlaceId = place.id
     }
+
+    func scheduleNearbySuggestion(
+        item: ShoppingItem,
+        placeName: String,
+        coordinate: CLLocationCoordinate2D,
+        distanceMeters: CLLocationDistance
+    ) async {}
 }

@@ -1,25 +1,31 @@
 import Foundation
 import Combine
 import CoreLocation
+import CoreMotion
 import UserNotifications
 
 @MainActor
 final class PermissionStatusViewModel: ObservableObject {
     @Published private(set) var locationStatus: CLAuthorizationStatus
+    @Published private(set) var activityStatus: CMAuthorizationStatus
     @Published private(set) var notificationStatus: UNAuthorizationStatus
     @Published var isRequestingLocation: Bool = false
+    @Published var isRequestingActivity: Bool = false
     @Published var isRequestingNotification: Bool = false
 
     private let locationManager: LocationPermissionManager
+    private let activityPermissionManager: ActivityPermissionManaging
     private let notificationScheduler: NotificationScheduling
     private let settingsOpener: SettingsOpening
 
     init(
         locationManager: LocationPermissionManager,
+        activityPermissionManager: ActivityPermissionManaging,
         notificationScheduler: NotificationScheduling,
         settingsOpener: SettingsOpening
     ) {
         self.locationManager = locationManager
+        self.activityPermissionManager = activityPermissionManager
         self.notificationScheduler = notificationScheduler
         self.settingsOpener = settingsOpener
         if let override = LaunchArguments.locationAuthorizationOverride {
@@ -28,6 +34,14 @@ final class PermissionStatusViewModel: ObservableObject {
             locationStatus = .authorizedAlways
         } else {
             locationStatus = locationManager.authorizationStatus()
+        }
+
+        if let override = LaunchArguments.activityAuthorizationOverride {
+            activityStatus = override
+        } else if LaunchArguments.isUITesting {
+            activityStatus = .authorized
+        } else {
+            activityStatus = activityPermissionManager.authorizationStatus()
         }
 
         if let notificationOverride = LaunchArguments.notificationAuthorizationOverride {
@@ -42,6 +56,7 @@ final class PermissionStatusViewModel: ObservableObject {
     convenience init(environment: AppEnvironment, settingsOpener: SettingsOpening = SystemSettingsOpener()) {
         self.init(
             locationManager: environment.locationPermissionManager,
+            activityPermissionManager: environment.activityPermissionManager,
             notificationScheduler: environment.notificationScheduler,
             settingsOpener: settingsOpener
         )
@@ -52,6 +67,12 @@ final class PermissionStatusViewModel: ObservableObject {
             locationStatus = override
         } else {
             locationStatus = locationManager.authorizationStatus()
+        }
+
+        if let override = LaunchArguments.activityAuthorizationOverride {
+            activityStatus = override
+        } else {
+            activityStatus = activityPermissionManager.authorizationStatus()
         }
 
         if let override = LaunchArguments.notificationAuthorizationOverride {
@@ -69,6 +90,16 @@ final class PermissionStatusViewModel: ObservableObject {
         isRequestingLocation = true
         locationStatus = await locationManager.requestAuthorization()
         isRequestingLocation = false
+    }
+
+    func requestActivityAuthorization() async {
+        if let override = LaunchArguments.activityAuthorizationOverride {
+            activityStatus = override
+            return
+        }
+        isRequestingActivity = true
+        activityStatus = await activityPermissionManager.requestAuthorization()
+        isRequestingActivity = false
     }
 
     func requestNotificationAuthorization() async {
@@ -96,6 +127,15 @@ final class PermissionStatusViewModel: ObservableObject {
 
     var needsNotificationPrompt: Bool {
         switch notificationStatus {
+        case .authorized:
+            return false
+        default:
+            return true
+        }
+    }
+
+    var needsActivityPrompt: Bool {
+        switch activityStatus {
         case .authorized:
             return false
         default:
@@ -149,6 +189,34 @@ final class PermissionStatusViewModel: ObservableObject {
         case .notDetermined:
             return "通知を許可"
         case .denied, .provisional, .ephemeral:
+            return "設定を開く"
+        case .authorized:
+            return ""
+        @unknown default:
+            return "設定を開く"
+        }
+    }
+
+    var activityMessage: String {
+        switch activityStatus {
+        case .notDetermined:
+            return "移動から停止に変わったタイミングで近くのお店候補を通知するため、アクティビティへのアクセスを許可してください。"
+        case .denied:
+            return "移動から停止に変わったタイミングで近くのお店候補を通知するため、アクティビティへのアクセスを許可してください。"
+        case .restricted:
+            return "このデバイスではアクティビティ情報にアクセスできません。"
+        case .authorized:
+            return ""
+        @unknown default:
+            return "アクティビティ権限の状態を確認してください。"
+        }
+    }
+
+    var activityPrimaryButtonTitle: String {
+        switch activityStatus {
+        case .notDetermined:
+            return "許可をリクエスト"
+        case .denied, .restricted:
             return "設定を開く"
         case .authorized:
             return ""

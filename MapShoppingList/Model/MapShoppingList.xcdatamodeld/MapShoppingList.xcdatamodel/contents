@@ -16,6 +16,7 @@
         <attribute name="note" optional="YES" attributeType="String"/>
         <attribute name="title" optional="NO" attributeType="String"/>
         <attribute name="updatedAt" optional="NO" attributeType="Date"/>
+        <relationship name="nearbySuggestionState" optional="YES" minCount="0" maxCount="1" deletionRule="Nullify" destinationEntity="NearbySuggestionState" inverseName="item" inverseEntity="NearbySuggestionState"/>
         <relationship name="places" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Place" inverseName="items" inverseEntity="Place"/>
         <fetchIndex name="item_purchase_updated">
             <fetchIndexElement property="isPurchased" type="Binary"/>
@@ -33,6 +34,19 @@
         <uniquenessConstraints>
             <constraint>
                 <constraintEntry key="place"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="NearbySuggestionState" representedClassName="NearbySuggestionState" syncable="YES">
+        <attribute name="lastNotifiedAt" optional="YES" attributeType="Date"/>
+        <attribute name="lastNotifiedLatitudeE6" optional="YES" attributeType="Integer 32"/>
+        <attribute name="lastNotifiedLongitudeE6" optional="YES" attributeType="Integer 32"/>
+        <attribute name="lastSuggestedPlaceID" optional="YES" attributeType="String"/>
+        <attribute name="lastSuggestedPlaceName" optional="YES" attributeType="String"/>
+        <relationship name="item" optional="NO" minCount="1" maxCount="1" deletionRule="Cascade" destinationEntity="Item" inverseName="nearbySuggestionState" inverseEntity="Item"/>
+        <uniquenessConstraints>
+            <constraint>
+                <constraintEntry key="item"/>
             </constraint>
         </uniquenessConstraints>
     </entity>

@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 import UserNotifications
 
 @MainActor
@@ -46,7 +47,14 @@ protocol NotificationScheduling {
     @discardableResult
     func requestAuthorization() async -> UNAuthorizationStatus
     func requestAuthorizationIfNeeded() async
+    func registerCategories()
     func schedule(place: Place, items: [ShoppingItem]) async
+    func scheduleNearbySuggestion(
+        item: ShoppingItem,
+        placeName: String,
+        coordinate: CLLocationCoordinate2D,
+        distanceMeters: CLLocationDistance
+    ) async
 }
 
 @MainActor
@@ -73,6 +81,30 @@ class NotificationScheduler: NotificationScheduling {
         _ = await requestAuthorization()
     }
 
+    func registerCategories() {
+        let purchased = UNNotificationAction(
+            identifier: NearbySuggestionNotificationContext.purchasedActionIdentifier,
+            title: "購入済み"
+        )
+        let delete = UNNotificationAction(
+            identifier: NearbySuggestionNotificationContext.deleteActionIdentifier,
+            title: "削除",
+            options: [.destructive]
+        )
+        let map = UNNotificationAction(
+            identifier: NearbySuggestionNotificationContext.mapActionIdentifier,
+            title: "地図",
+            options: [.foreground]
+        )
+        let category = UNNotificationCategory(
+            identifier: NearbySuggestionNotificationContext.categoryIdentifier,
+            actions: [purchased, delete, map],
+            intentIdentifiers: [],
+            options: [.customDismissAction]
+        )
+        UNUserNotificationCenter.current().setNotificationCategories([category])
+    }
+
     func schedule(place: Place, items: [ShoppingItem]) async {
         let content = UNMutableNotificationContent()
         content.title = "近くに \(place.name)"
@@ -90,6 +122,33 @@ class NotificationScheduler: NotificationScheduling {
         }
     }
 
+    func scheduleNearbySuggestion(
+        item: ShoppingItem,
+        placeName: String,
+        coordinate: CLLocationCoordinate2D,
+        distanceMeters: CLLocationDistance
+    ) async {
+        let content = UNMutableNotificationContent()
+        content.title = "\(item.title)が買えそうです"
+        content.body = "\(placeName)(\(approximateDistanceText(for: distanceMeters)))"
+        content.sound = .default
+        content.categoryIdentifier = NearbySuggestionNotificationContext.categoryIdentifier
+        content.userInfo = NearbySuggestionNotificationContext(
+            itemId: item.id,
+            placeName: placeName,
+            placeLatitude: coordinate.latitude,
+            placeLongitude: coordinate.longitude
+        ).userInfo
+
+        let identifier = nearbySuggestionIdentifier(for: item.id)
+        center.removePendingRequests(withIdentifiers: [identifier])
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+        do {
+            try await center.add(request)
+        } catch {
+        }
+    }
+
     func body(for items: [ShoppingItem]) -> String {
         let pending = items.prefix(4).map { $0.title }
         if pending.isEmpty { return "買う予定のアイテムはありません" }
@@ -98,5 +157,14 @@ class NotificationScheduler: NotificationScheduling {
         } else {
             return pending.joined(separator: ", ") + " ほか\(items.count - pending.count)件"
         }
+    }
+
+    func nearbySuggestionIdentifier(for itemId: UUID) -> String {
+        "nearby_item_\(itemId.uuidString)"
+    }
+
+    func approximateDistanceText(for distanceMeters: CLLocationDistance) -> String {
+        let roundedMeters = max(10, Int(distanceMeters.rounded(.toNearestOrAwayFromZero) / 10) * 10)
+        return "約\(roundedMeters)m"
     }
 }

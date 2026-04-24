@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var showPlaceManagement = false
     @State private var showPrivacyPolicy = false
     @State private var showOssLicenses = false
+    @State private var showNearbyDebugLogs = false
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -32,7 +33,9 @@ struct ContentView: View {
             NavigationView {
                 ZStack(alignment: .bottomTrailing) {
                     List {
-                        if permissionViewModel.needsLocationPrompt || permissionViewModel.needsNotificationPrompt {
+                        if permissionViewModel.needsLocationPrompt
+                            || permissionViewModel.needsActivityPrompt
+                            || permissionViewModel.needsNotificationPrompt {
                             PermissionPromptSection(viewModel: permissionViewModel)
                         }
                         if !viewModel.pendingItems.isEmpty {
@@ -97,6 +100,7 @@ struct ContentView: View {
                         if shouldHandlePermissions {
                             await permissionViewModel.refreshStatuses()
                             await permissionViewModel.requestLocationAuthorization()
+                            await environment.activityMonitor.start()
                             await environment.geofenceCoordinator.syncActiveGeofences()
                         }
                         await viewModel.load()
@@ -105,6 +109,17 @@ struct ContentView: View {
                         guard LaunchArguments.isUITesting == false,
                             LaunchArguments.isRunningTests == false else { return }
                         Task { await environment.geofenceCoordinator.syncActiveGeofences() }
+                    }
+                    .onReceive(
+                        NotificationCenter.default.publisher(for: .openShoppingItemFromNotification)
+                    ) { notification in
+                        guard
+                            let itemIdString = notification.userInfo?[AppNotificationUserInfoKey.itemId] as? String,
+                            let itemId = UUID(uuidString: itemIdString)
+                        else {
+                            return
+                        }
+                        editorConfig = EditorConfig(mode: .edit(itemId))
                     }
                     .alert("エラー", isPresented: Binding<Bool>(
                         get: { viewModel.errorMessage != nil },
@@ -150,6 +165,14 @@ struct ContentView: View {
                             OssLicensesView()
                         }
                     }
+                    .sheet(isPresented: $showNearbyDebugLogs) {
+                        if #available(iOS 18.0, *) {
+                            NearbyDebugLogsView()
+                                .presentationSizing(.page)
+                        } else {
+                            NearbyDebugLogsView()
+                        }
+                    }
 
                     // フローティングアクションボタン
                     FloatingActionButton {
@@ -181,6 +204,7 @@ struct ContentView: View {
                 showPlaceManagement: $showPlaceManagement,
                 showPrivacyPolicy: $showPrivacyPolicy,
                 showOssLicenses: $showOssLicenses,
+                showNearbyDebugLogs: $showNearbyDebugLogs,
                 isPresented: $showSidebar
             )
         }
@@ -205,139 +229,6 @@ private struct FloatingActionButton: View {
         }
         .accessibilityLabel("アイテムを追加")
         .accessibilityIdentifier(UITestIdentifiers.Home.fabAddItem)
-    }
-}
-
-/// 左側からスライドインするサイドバーメニュー
-private struct SlidingSidebarMenuView: View {
-    @Binding var showPlaceManagement: Bool
-    @Binding var showPrivacyPolicy: Bool
-    @Binding var showOssLicenses: Bool
-    @Binding var isPresented: Bool
-
-    var body: some View {
-        ZStack {
-            // 背景のオーバーレイ（タップで閉じる）
-            if isPresented {
-                Color.black.opacity(0.3)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            isPresented = false
-                        }
-                    }
-                    .transition(.opacity)
-            }
-
-            // サイドバーメニュー
-            HStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: 0) {
-                    // ヘッダー
-                    HStack {
-                        Text("メニュー")
-                            .font(.headline)
-                            .foregroundStyle(Color.appOnSurface)
-                        Spacer()
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                isPresented = false
-                            }
-                        } label: {
-                            Image(systemName: "xmark")
-                                .foregroundStyle(Color.appOnSurface)
-                                .accessibilityLabel("閉じる")
-                        }
-                    }
-                    .padding()
-                    .background(Color.appSurface)
-
-                    Divider()
-
-                    // メニュー項目
-                    VStack(alignment: .leading, spacing: 0) {
-                        MenuItemButton(
-                            icon: "mappin.and.ellipse",
-                            title: "地点管理",
-                            identifier: UITestIdentifiers.Menu.placeManagement
-                        ) {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                isPresented = false
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                showPlaceManagement = true
-                            }
-                        }
-
-                        Divider().padding(.leading, 56)
-
-                        MenuItemButton(
-                            icon: "lock.doc",
-                            title: "プライバシーポリシー",
-                            identifier: UITestIdentifiers.Menu.privacyPolicy
-                        ) {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                isPresented = false
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                showPrivacyPolicy = true
-                            }
-                        }
-
-                        Divider().padding(.leading, 56)
-
-                        MenuItemButton(
-                            icon: "doc.text",
-                            title: "OSSライセンス",
-                            identifier: UITestIdentifiers.Menu.ossLicenses
-                        ) {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                isPresented = false
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                showOssLicenses = true
-                            }
-                        }
-
-                        Spacer()
-                    }
-                    .background(Color.appSurface)
-                }
-                .frame(width: 280)
-                .background(Color.appSurface)
-                .offset(x: isPresented ? 0 : -280)
-
-                Spacer()
-            }
-        }
-        .animation(.easeInOut(duration: 0.3), value: isPresented)
-        .allowsHitTesting(isPresented)
-    }
-}
-
-/// メニュー項目ボタン
-private struct MenuItemButton: View {
-    let icon: String
-    let title: String
-    let identifier: String?
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundStyle(Color.appOnSurface)
-                    .frame(width: 24)
-                Text(title)
-                    .foregroundStyle(Color.appOnSurface)
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier(identifier ?? "")
     }
 }
 
